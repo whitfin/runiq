@@ -17,9 +17,11 @@ extern crate clap;
 
 // inner mods
 mod options;
+mod statistics;
 
 // scope requirements
 use options::Options;
+use statistics::Stats;
 use std::env;
 use std::fs::File;
 use std::io::{stdin, BufRead, BufReader, Read};
@@ -39,6 +41,9 @@ fn main() {
             }
         })
         .collect();
+
+    // create stats container
+    let mut _stats = Stats::new();
 
     // echo everything for now
     for reader in readers {
