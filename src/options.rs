@@ -36,6 +36,7 @@ impl Options {
 
             // argument details for the flags and arguments provided
             (@arg inputs: +required +multiple "Sets the input sources to use")
+            (@arg invert: -i --invert "Prints duplicates instead of uniques")
 
             // settings required for parsing
             (@setting ArgRequiredElseHelp)
@@ -45,17 +46,17 @@ impl Options {
         // parse out the arguments into matching opts
         let options = parser.get_matches_from(args);
 
-        // grab the inputs and map to String
-        let inputs = options
-            .values_of("inputs")
-            .unwrap()
-            .map(|s| s.to_owned())
-            .collect();
-
         // create opts
         Options {
-            inputs,
-            invert: false,
+            // grab and store inversion flags
+            invert: options.is_present("invert"),
+
+            // own all inputs
+            inputs: options
+                .values_of("inputs")
+                .unwrap()
+                .map(|s| s.to_owned())
+                .collect(),
         }
     }
 }

@@ -50,9 +50,15 @@ fn main() {
     for reader in readers {
         // iterate every line coming from the reader
         for line in BufReader::new(reader).lines() {
-            // echo first occurrence
+            // unwrap the next input
             let input = line.unwrap();
+
+            // echo back to console
             if filter.insert(&input) {
+                if !options.invert {
+                    println!("{}", input);
+                }
+            } else if options.invert {
                 println!("{}", input);
             }
         }
