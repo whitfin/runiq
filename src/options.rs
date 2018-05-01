@@ -4,7 +4,7 @@
 //! parsing of things like command line arguments into something
 //! more easily used internally (from the main application flow).
 use clap::{App, AppSettings, Arg, ArgSettings};
-use filters::{Filter, NaiveFilter};
+use filters::{DigestFilter, Filter, NaiveFilter};
 use std::ffi::OsString;
 
 /// Options struct to store configuration state.
@@ -64,7 +64,11 @@ impl Options {
 
     /// Creates a new boxed `Filter` baed on the configured filter.
     pub fn new_filter(&self) -> Box<Filter> {
-        Box::new(NaiveFilter::new())
+        match self.filter.as_str() {
+            "naive" => Box::new(NaiveFilter::new()),
+            "digest" => Box::new(DigestFilter::new()),
+            _ => panic!("Covered in parser"),
+        }
     }
 
     /// Creates a parser used to generate `Options`.
@@ -88,8 +92,8 @@ impl Options {
                     .help("Filter to use to determine uniqueness")
                     .short("f")
                     .long("filter")
-                    .default_value("naive")
-                    .possible_values(&["naive"])
+                    .default_value("digest")
+                    .possible_values(&["digest","naive"])
                     .set(ArgSettings::HideDefaultValue),
 
                 // inputs: +required +multiple

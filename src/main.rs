@@ -13,6 +13,7 @@
 //! distributed as a core crate if the backing implementation becomes
 //! interesting for other use cases.
 extern crate clap;
+extern crate fxhash;
 
 // inner mods
 mod filters;
