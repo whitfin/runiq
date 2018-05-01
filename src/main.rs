@@ -16,12 +16,13 @@
 extern crate clap;
 
 // inner mods
+mod filters;
 mod options;
 mod statistics;
 
 // scope requirements
+use filters::{Filter, NaiveFilter};
 use options::Options;
-use statistics::Stats;
 use std::env;
 use std::fs::File;
 use std::io::{stdin, BufRead, BufReader, Read};
@@ -42,13 +43,18 @@ fn main() {
         })
         .collect();
 
-    // create stats container
-    let mut _stats = Stats::new();
+    // create native filter for testing
+    let mut filter = NaiveFilter::new();
 
-    // echo everything for now
+    // sequential readers for now
     for reader in readers {
+        // iterate every line coming from the reader
         for line in BufReader::new(reader).lines() {
-            println!("{}", line.unwrap());
+            // echo first occurrence
+            let input = line.unwrap();
+            if filter.insert(&input) {
+                println!("{}", input);
+            }
         }
     }
 }
