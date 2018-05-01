@@ -21,6 +21,7 @@ mod statistics;
 
 // scope requirements
 use options::Options;
+use statistics::Stats;
 use std::env;
 use std::fs::File;
 use std::io::{stdin, BufRead, BufReader, Read};
@@ -44,6 +45,9 @@ fn main() {
     // create filter from provided options
     let mut filter = options.new_filter();
 
+    // create statistics container for filters
+    let mut statistics = Stats::new();
+
     // sequential readers for now
     for reader in readers {
         // iterate every line coming from the reader
@@ -51,13 +55,21 @@ fn main() {
             // unwrap the next input
             let input = line.unwrap();
 
-            // echo back to console
-            if filter.insert(&input) {
+            // detect duplicate value
+            if filter.detect(&input) {
+                // add a unique count
+                statistics.add_unique();
+                // echo if not inverted
                 if !options.is_inverted() {
                     println!("{}", input);
                 }
-            } else if options.is_inverted() {
-                println!("{}", input);
+            } else {
+                // add a duplicate count
+                statistics.add_duplicate();
+                // echo if we're inverted
+                if options.is_inverted() {
+                    println!("{}", input);
+                }
             }
         }
     }

@@ -16,12 +16,12 @@ pub trait Filter {
     where
         Self: Sized;
 
-    /// Insert a value into the filter.
+    /// Detects a duplicate value.
     ///
     /// Return values are booleans to represent whether the value
     /// was added to the internal filter or not (i.e. `true` if
     /// this is the first time the value has been seen).
-    fn insert(&mut self, input: &String) -> bool;
+    fn detect(&mut self, input: &String) -> bool;
 }
 
 /// Basic filter backed by a HashSet.
@@ -42,7 +42,7 @@ impl Filter for NaiveFilter {
 
     /// Inserts an input to the set.
     #[inline]
-    fn insert(&mut self, input: &String) -> bool {
+    fn detect(&mut self, input: &String) -> bool {
         self.inner.insert(input.clone())
     }
 }
