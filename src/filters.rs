@@ -12,7 +12,9 @@ use std::collections::HashSet;
 /// will provide the ability to check/insert in a single operation.
 pub trait Filter {
     /// Create a new instance using defaults.
-    fn new() -> Self;
+    fn new() -> Self
+    where
+        Self: Sized;
 
     /// Insert a value into the filter.
     ///

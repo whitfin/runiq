@@ -3,6 +3,8 @@
 //! Nothing particularly important to see here, just typical
 //! parsing of things like command line arguments into something
 //! more easily used internally (from the main application flow).
+use clap::{App, AppSettings, Arg, ArgSettings};
+use filters::{Filter, NaiveFilter};
 use std::ffi::OsString;
 
 /// Options struct to store configuration state.
@@ -12,8 +14,9 @@ use std::ffi::OsString;
 /// and flags to dictate behaviour will be stored here. It acts
 /// (in essence) as application configuration.
 pub struct Options {
-    pub inputs: Vec<String>,
-    pub invert: bool,
+    filter: String,
+    inputs: Vec<String>,
+    invert: bool,
 }
 
 impl Options {
@@ -26,28 +29,17 @@ impl Options {
         I: IntoIterator<Item = T>,
         T: Into<OsString> + Clone,
     {
-        // create a parser for our args
-        let parser = clap_app!(app =>
-
-            // package metadata from cargo
-            (name: env!("CARGO_PKG_NAME"))
-            (about: env!("CARGO_PKG_DESCRIPTION"))
-            (version: env!("CARGO_PKG_VERSION"))
-
-            // argument details for the flags and arguments provided
-            (@arg inputs: +required +multiple "Sets the input sources to use")
-            (@arg invert: -i --invert "Prints duplicates instead of uniques")
-
-            // settings required for parsing
-            (@setting ArgRequiredElseHelp)
-            (@setting TrailingVarArg)
-        );
+        // create a new parser for our args
+        let parser = Options::create_parser();
 
         // parse out the arguments into matching opts
         let options = parser.get_matches_from(args);
 
         // create opts
         Options {
+            // store the filter to use for unique detection
+            filter: options.value_of("filter").unwrap().to_owned(),
+
             // grab and store inversion flags
             invert: options.is_present("invert"),
 
@@ -58,5 +50,65 @@ impl Options {
                 .map(|s| s.to_owned())
                 .collect(),
         }
+    }
+
+    /// Returns configured inputs.
+    pub fn get_inputs(&self) -> &[String] {
+        &self.inputs
+    }
+
+    /// Returns whether this run is inverted.
+    pub fn is_inverted(&self) -> bool {
+        self.invert
+    }
+
+    /// Creates a new boxed `Filter` baed on the configured filter.
+    pub fn new_filter(&self) -> Box<Filter> {
+        Box::new(NaiveFilter::new())
+    }
+
+    /// Creates a parser used to generate `Options`.
+    ///
+    /// All command line usage information can be found in the definitions
+    /// below, and follows the API of the `clap` library.
+    ///
+    /// In terms of visibility, this method is defined on the struct due to
+    /// the parser being specifically designed around the `Options` struct.
+    fn create_parser<'a, 'b>() -> App<'a, 'b> {
+        App::new("")
+            // package metadata from cargo
+            .name(env!("CARGO_PKG_NAME"))
+            .about(env!("CARGO_PKG_DESCRIPTION"))
+            .version(env!("CARGO_PKG_VERSION"))
+
+            // arguments and flag details
+            .args(&[
+                // filter: -f, --filter [naive]
+                Arg::with_name("filter")
+                    .help("Filter to use to determine uniqueness")
+                    .short("f")
+                    .long("filter")
+                    .default_value("naive")
+                    .possible_values(&["naive"])
+                    .set(ArgSettings::HideDefaultValue),
+
+                // inputs: +required +multiple
+                Arg::with_name("inputs")
+                    .help("Input sources to filter")
+                    .multiple(true)
+                    .required(true),
+
+                // invert: -i --invert
+                Arg::with_name("invert")
+                    .help("Prints duplicates instead of uniques")
+                    .short("i")
+                    .long("invert"),
+            ])
+
+            // settings required for parsing
+            .settings(&[
+                AppSettings::ArgRequiredElseHelp,
+                AppSettings::TrailingVarArg,
+            ])
     }
 }

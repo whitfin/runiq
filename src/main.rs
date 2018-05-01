@@ -12,7 +12,6 @@
 //! Runiq is only built as a command line tool, although it may be
 //! distributed as a core crate if the backing implementation becomes
 //! interesting for other use cases.
-#[macro_use]
 extern crate clap;
 
 // inner mods
@@ -21,7 +20,6 @@ mod options;
 mod statistics;
 
 // scope requirements
-use filters::{Filter, NaiveFilter};
 use options::Options;
 use std::env;
 use std::fs::File;
@@ -33,7 +31,7 @@ fn main() {
 
     // ensure all sources exist as readers
     let readers: Vec<Box<Read>> = options
-        .inputs
+        .get_inputs()
         .into_iter()
         .map(|input| -> Box<Read> {
             match input.as_ref() {
@@ -43,8 +41,8 @@ fn main() {
         })
         .collect();
 
-    // create native filter for testing
-    let mut filter = NaiveFilter::new();
+    // create filter from provided options
+    let mut filter = options.new_filter();
 
     // sequential readers for now
     for reader in readers {
@@ -55,10 +53,10 @@ fn main() {
 
             // echo back to console
             if filter.insert(&input) {
-                if !options.invert {
+                if !options.is_inverted() {
                     println!("{}", input);
                 }
-            } else if options.invert {
+            } else if options.is_inverted() {
                 println!("{}", input);
             }
         }
