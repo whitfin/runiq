@@ -4,7 +4,7 @@
 //! parsing of things like command line arguments into something
 //! more easily used internally (from the main application flow).
 use clap::{App, AppSettings, Arg, ArgSettings};
-use filters::{DigestFilter, Filter, NaiveFilter};
+use filters::FilterKind;
 use std::ffi::OsString;
 
 /// Options struct to store configuration state.
@@ -14,9 +14,9 @@ use std::ffi::OsString;
 /// and flags to dictate behaviour will be stored here. It acts
 /// (in essence) as application configuration.
 pub struct Options {
-    filter: String,
-    inputs: Vec<String>,
-    invert: bool,
+    pub filter: FilterKind,
+    pub inputs: Vec<String>,
+    pub invert: bool,
 }
 
 impl Options {
@@ -35,10 +35,13 @@ impl Options {
         // parse out the arguments into matching opts
         let options = parser.get_matches_from(args);
 
+        // attempt to parse the provided filter
+        let filter = value_t!(options.value_of("filter"), FilterKind);
+
         // create opts
         Options {
             // store the filter to use for unique detection
-            filter: options.value_of("filter").unwrap().to_owned(),
+            filter: filter.unwrap_or(FilterKind::Digest),
 
             // grab and store inversion flags
             invert: options.is_present("invert"),
@@ -49,25 +52,6 @@ impl Options {
                 .unwrap()
                 .map(|s| s.to_owned())
                 .collect(),
-        }
-    }
-
-    /// Returns configured inputs.
-    pub fn get_inputs(&self) -> &[String] {
-        &self.inputs
-    }
-
-    /// Returns whether this run is inverted.
-    pub fn is_inverted(&self) -> bool {
-        self.invert
-    }
-
-    /// Creates a new boxed `Filter` baed on the configured filter.
-    pub fn new_filter(&self) -> Box<Filter> {
-        match self.filter.as_str() {
-            "naive" => Box::new(NaiveFilter::new()),
-            "digest" => Box::new(DigestFilter::new()),
-            _ => panic!("Covered in parser"),
         }
     }
 
@@ -92,8 +76,9 @@ impl Options {
                     .help("Filter to use to determine uniqueness")
                     .short("f")
                     .long("filter")
-                    .default_value("digest")
-                    .possible_values(&["digest","naive"])
+                    .takes_value(true)
+                    .possible_values(&FilterKind::variants())
+                    .set(ArgSettings::CaseInsensitive)
                     .set(ArgSettings::HideDefaultValue),
 
                 // inputs: +required +multiple

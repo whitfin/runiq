@@ -12,6 +12,7 @@
 //! Runiq is only built as a command line tool, although it may be
 //! distributed as a core crate if the backing implementation becomes
 //! interesting for other use cases.
+#[macro_use]
 extern crate clap;
 extern crate twox_hash;
 
@@ -21,6 +22,7 @@ mod options;
 mod statistics;
 
 // scope requirements
+use filters::Filter;
 use options::Options;
 use statistics::Stats;
 use std::env;
@@ -32,8 +34,7 @@ fn main() {
     let options = Options::from(&mut env::args_os());
 
     // ensure all sources exist as readers
-    let readers: Vec<Box<Read>> = options
-        .get_inputs()
+    let readers: Vec<Box<Read>> = (&options.inputs)
         .into_iter()
         .map(|input| -> Box<Read> {
             match input.as_ref() {
@@ -43,8 +44,8 @@ fn main() {
         })
         .collect();
 
-    // create filter from provided options
-    let mut filter = options.new_filter();
+    // create boxed filter from provided option filter
+    let mut filter: Box<Filter> = options.filter.into();
 
     // create statistics container for filters
     let mut statistics = Stats::new();
@@ -61,14 +62,14 @@ fn main() {
                 // add a unique count
                 statistics.add_unique();
                 // echo if not inverted
-                if !options.is_inverted() {
+                if !options.invert {
                     println!("{}", input);
                 }
             } else {
                 // add a duplicate count
                 statistics.add_duplicate();
                 // echo if we're inverted
-                if options.is_inverted() {
+                if options.invert {
                     println!("{}", input);
                 }
             }
