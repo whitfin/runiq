@@ -35,9 +35,10 @@ impl Options {
             (version: env!("CARGO_PKG_VERSION"))
 
             // argument details for the flags and arguments provided
-            (@arg INPUT: +required +multiple "Sets the input sources to use")
+            (@arg inputs: +required +multiple "Sets the input sources to use")
 
             // settings required for parsing
+            (@setting ArgRequiredElseHelp)
             (@setting TrailingVarArg)
         );
 
@@ -46,7 +47,7 @@ impl Options {
 
         // grab the inputs and map to String
         let inputs = options
-            .values_of("INPUT")
+            .values_of("inputs")
             .unwrap()
             .map(|s| s.to_owned())
             .collect();
