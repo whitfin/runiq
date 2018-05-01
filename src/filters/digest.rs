@@ -2,9 +2,9 @@
 //!
 //! The implementations in this module should provide better memory
 //! efficiency over the naive implementations provided.
-use fxhash::FxHasher64;
 use std::collections::HashSet;
 use std::hash::Hasher;
+use twox_hash::XxHash;
 use super::Filter;
 
 /// Digest filter backed by a HashSet.
@@ -27,7 +27,7 @@ impl Filter for DigestFilter {
     /// Detects a duplicate value.
     #[inline]
     fn detect(&mut self, input: &str) -> bool {
-        let mut hasher = FxHasher64::default();
+        let mut hasher = XxHash::default();
         hasher.write(input.as_bytes());
         self.inner.insert(hasher.finish())
     }
