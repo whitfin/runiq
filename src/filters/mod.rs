@@ -4,10 +4,12 @@
 //! `std::collections::HashSet`, it is abstracted away from the main
 //! flow in case we want to support multiple filtering mechanisms in
 //! future (perhaps for different performance enhancements).
+mod consecutive;
 mod digest;
 mod naive;
 
 // filter scope inclusion
+use self::consecutive::ConsecutiveFilter;
 use self::digest::DigestFilter;
 use self::naive::NaiveFilter;
 
@@ -19,6 +21,7 @@ arg_enum! {
     /// boxed filter from a filter kind to keep conversion contained.
     #[derive(Debug)]
     pub enum FilterKind {
+        Consecutive,
         Digest,
         Naive,
     }
@@ -47,6 +50,7 @@ impl Into<Box<Filter>> for FilterKind {
     /// Creates a new `Filter` type based on the enum value.
     fn into(self) -> Box<Filter> {
         match self {
+            FilterKind::Consecutive => Box::new(ConsecutiveFilter::new()),
             FilterKind::Digest => Box::new(DigestFilter::new()),
             FilterKind::Naive => Box::new(NaiveFilter::new()),
         }
