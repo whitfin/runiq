@@ -14,6 +14,7 @@
 //! interesting for other use cases.
 #[macro_use]
 extern crate clap;
+extern crate fnv;
 extern crate xxhash2;
 
 // inner mods

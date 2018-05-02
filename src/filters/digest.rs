@@ -2,7 +2,7 @@
 //!
 //! The implementations in this module should provide better memory
 //! efficiency over the naive implementations provided.
-use std::collections::HashSet;
+use fnv::FnvHashSet;
 use super::Filter;
 use xxhash2;
 
@@ -13,7 +13,7 @@ use xxhash2;
 /// a little faster, but not particularly noticeable.
 #[derive(Default)]
 pub struct DigestFilter {
-    inner: HashSet<usize>,
+    inner: FnvHashSet<usize>,
 }
 
 /// Implement all trait methods.

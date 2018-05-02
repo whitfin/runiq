@@ -6,4 +6,5 @@ description = "An efficient way to filter duplicate lines from input, à la uniq
 
 [dependencies]
 clap = "2.31"
+fnv = "1.0"
 xxhash2 = "0.1"
