@@ -14,7 +14,7 @@
 //! interesting for other use cases.
 #[macro_use]
 extern crate clap;
-extern crate twox_hash;
+extern crate xxhash2;
 
 // inner mods
 mod filters;

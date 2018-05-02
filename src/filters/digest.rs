@@ -3,9 +3,8 @@
 //! The implementations in this module should provide better memory
 //! efficiency over the naive implementations provided.
 use std::collections::HashSet;
-use std::hash::Hasher;
-use twox_hash::XxHash;
 use super::Filter;
+use xxhash2;
 
 /// Digest filter backed by a HashSet.
 ///
@@ -14,7 +13,7 @@ use super::Filter;
 /// a little faster, but not particularly noticeable.
 #[derive(Default)]
 pub struct DigestFilter {
-    inner: HashSet<u64>,
+    inner: HashSet<usize>,
 }
 
 /// Implement all trait methods.
@@ -27,9 +26,18 @@ impl Filter for DigestFilter {
     /// Detects a duplicate value.
     #[inline]
     fn detect(&mut self, input: &str) -> bool {
-        let mut hasher = XxHash::default();
-        hasher.write(input.as_bytes());
-        self.inner.insert(hasher.finish())
+        // grab the bytes from the input
+        let bytes = input.as_bytes();
+
+        // hash based on whether we're u32 or u64, for efficiency
+        let digest: usize = if cfg!(target_pointer_width = "64") {
+            xxhash2::hash64(bytes, 0) as usize
+        } else {
+            xxhash2::hash32(bytes, 0) as usize
+        };
+
+        // insert the new digest
+        self.inner.insert(digest)
     }
 }
 
