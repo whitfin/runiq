@@ -16,7 +16,8 @@ use std::ffi::OsString;
 pub struct Options {
     pub filter: FilterKind,
     pub inputs: Vec<String>,
-    pub invert: bool,
+    pub inverted: bool,
+    pub statistics: bool,
 }
 
 impl Options {
@@ -40,11 +41,14 @@ impl Options {
 
         // create opts
         Options {
-            // store the filter to use for unique detection
-            filter: filter.unwrap_or(FilterKind::Digest),
+            // grab and store statistics flags
+            statistics: options.is_present("statistics"),
 
             // grab and store inversion flags
-            invert: options.is_present("invert"),
+            inverted: options.is_present("invert"),
+
+            // store the filter to use for unique detection
+            filter: filter.unwrap_or(FilterKind::Digest),
 
             // own all inputs
             inputs: options
@@ -92,6 +96,12 @@ impl Options {
                     .help("Prints duplicates instead of uniques")
                     .short("i")
                     .long("invert"),
+
+                // statistics: -s --statistics
+                Arg::with_name("statistics")
+                    .help("Prints statistics instead of entries")
+                    .short("s")
+                    .long("statistics"),
             ])
 
             // settings required for parsing

@@ -58,6 +58,45 @@ impl Stats {
     pub fn get_rate(&self) -> f32 {
         ((self.unique as f64 / self.total as f64) * 100.0) as f32
     }
+
+    /// Prints all statistics to stdout.
+    pub fn print(&self) {
+        println!("");
+        uprintln("Unique Count", self.get_unique(), 1);
+        uprintln("Total Count", self.get_total(), 2);
+        uprintln("Dup Offset", self.get_duplicate(), 3);
+        println!("Dup Rate:{:>22.2}%", 100.0 - self.get_rate());
+        println!("");
+    }
+}
+
+/// Prints a u64 stats value against a label.
+///
+/// The label and value are provided alongside an offset used purely
+/// for alignment when displayed in a terminal, since we don't want
+/// to depend on a table drawing library just for this :).
+///
+/// This implementation is borrowed from the `separator` crate from
+/// [this repo](https://github.com/saghm/rust-separator).
+#[inline]
+fn uprintln(label: &str, value: u64, offset: usize) {
+    let str_value = value.to_string();
+
+    let mut output = String::new();
+    let mut place = str_value.len();
+    let mut later_loop = false;
+
+    for ch in str_value.chars() {
+        if later_loop && place % 3 == 0 {
+            output.push(',');
+        }
+
+        output.push(ch);
+        later_loop = true;
+        place -= 1;
+    }
+
+    println!("{}:{:>w$}", label, output, w = 18 + offset);
 }
 
 #[cfg(test)]

@@ -60,20 +60,29 @@ fn main() {
 
             // detect duplicate value
             if filter.detect(&input) {
-                // add a unique count
-                statistics.add_unique();
-                // echo if not inverted
-                if !options.invert {
+                // handle stats or print
+                if options.statistics {
+                    // add a unique count
+                    statistics.add_unique();
+                } else if !options.inverted {
+                    // echo if not inverted
                     println!("{}", input);
                 }
             } else {
-                // add a duplicate count
-                statistics.add_duplicate();
-                // echo if we're inverted
-                if options.invert {
+                // handle stats or print
+                if options.statistics {
+                    // add a duplicate count
+                    statistics.add_duplicate();
+                } else if options.inverted {
+                    // echo if we're inverted
                     println!("{}", input);
                 }
             }
         }
+    }
+
+    // handle stats logging
+    if options.statistics {
+        statistics.print();
     }
 }
