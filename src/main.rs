@@ -12,13 +12,19 @@
 //! Runiq is only built as a command line tool, although it may be
 //! distributed as a core crate if the backing implementation becomes
 //! interesting for other use cases.
+#![doc(html_root_url = "https://docs.rs/runiq/0.1.0")]
+#![deny(warnings, missing_debug_implementations)]
+
+// crate imports
 #[macro_use]
 extern crate clap;
 extern crate fnv;
 extern crate xxhash2;
 
-// inner mods
-mod filters;
+// documented mods
+pub mod filters;
+
+// priv mods
 mod options;
 mod statistics;
 

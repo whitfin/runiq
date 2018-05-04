@@ -13,6 +13,7 @@ use std::ffi::OsString;
 /// to the execution of the application; things such as inputs
 /// and flags to dictate behaviour will be stored here. It acts
 /// (in essence) as application configuration.
+#[derive(Clone, Debug)]
 pub struct Options {
     pub filter: FilterKind,
     pub inputs: Vec<String>,

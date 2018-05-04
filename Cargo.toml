@@ -1,8 +1,16 @@
 [package]
 name = "runiq"
-version = "0.1.0"
+version = "0.1.0" # remember to update html_root_url
 authors = ["Isaac Whitfield <iw@whitfin.io>"]
 description = "An efficient way to filter duplicate lines from input, à la uniq."
+repository = "https://github.com/whitfin/runiq"
+keywords = ["filtering", "logging", "unique"]
+categories = ["algorithms", "command-line-utilities", "text-processing"]
+readme = "README.md"
+license = "MIT"
+
+[badges]
+travis-ci = { repository = "whitfin/runiq" }
 
 [dependencies]
 clap = "2.31"

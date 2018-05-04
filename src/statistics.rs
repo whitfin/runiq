@@ -14,7 +14,7 @@
 ///
 /// More might be added in future, but for now these are the only
 /// metrics surfaced on the `Stats` API.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Stats {
     unique: u64,
     total: u64,
@@ -39,33 +39,33 @@ impl Stats {
         self.total += 1;
     }
 
-    /// Retrieves the total count of unique entries.
-    pub fn get_unique(&self) -> u64 {
-        self.unique
-    }
-
     /// Retrieves the total count of duplicate entries.
-    pub fn get_duplicate(&self) -> u64 {
+    pub fn duplicates(&self) -> u64 {
         self.total - self.unique
     }
 
+    /// Retrieves the rate of receiving duplicates.
+    pub fn rate(&self) -> f32 {
+        ((self.unique as f64 / self.total as f64) * 100.0) as f32
+    }
+
     /// Retrieves the total count of input entries.
-    pub fn get_total(&self) -> u64 {
+    pub fn total(&self) -> u64 {
         self.total
     }
 
-    /// Retrieves the rate of receiving duplicates.
-    pub fn get_rate(&self) -> f32 {
-        ((self.unique as f64 / self.total as f64) * 100.0) as f32
+    /// Retrieves the total count of unique entries.
+    pub fn uniques(&self) -> u64 {
+        self.unique
     }
 
     /// Prints all statistics to stdout.
     pub fn print(&self) {
         println!("");
-        uprintln("Unique Count", self.get_unique(), 1);
-        uprintln("Total Count", self.get_total(), 2);
-        uprintln("Dup Offset", self.get_duplicate(), 3);
-        println!("Dup Rate:{:>22.2}%", 100.0 - self.get_rate());
+        uprintln("Unique Count", self.uniques(), 1);
+        uprintln("Total Count", self.total(), 2);
+        uprintln("Dup Offset", self.duplicates(), 3);
+        println!("Dup Rate:{:>22.2}%", 100.0 - self.rate());
         println!("");
     }
 }
@@ -107,9 +107,9 @@ mod tests {
     fn default_creation() {
         let stats = Stats::new();
 
-        assert_eq!(stats.get_total(), 0);
-        assert_eq!(stats.get_unique(), 0);
-        assert_eq!(stats.get_duplicate(), 0);
+        assert_eq!(stats.total(), 0);
+        assert_eq!(stats.uniques(), 0);
+        assert_eq!(stats.duplicates(), 0);
     }
 
     #[test]
@@ -120,9 +120,9 @@ mod tests {
         stats.add_unique();
         stats.add_unique();
 
-        assert_eq!(stats.get_total(), 3);
-        assert_eq!(stats.get_unique(), 3);
-        assert_eq!(stats.get_duplicate(), 0);
+        assert_eq!(stats.total(), 3);
+        assert_eq!(stats.uniques(), 3);
+        assert_eq!(stats.duplicates(), 0);
     }
 
     #[test]
@@ -133,9 +133,9 @@ mod tests {
         stats.add_duplicate();
         stats.add_duplicate();
 
-        assert_eq!(stats.get_total(), 3);
-        assert_eq!(stats.get_unique(), 0);
-        assert_eq!(stats.get_duplicate(), 3);
+        assert_eq!(stats.total(), 3);
+        assert_eq!(stats.uniques(), 0);
+        assert_eq!(stats.duplicates(), 3);
     }
 
     #[test]
@@ -149,9 +149,9 @@ mod tests {
         stats.add_unique();
         stats.add_unique();
 
-        assert_eq!(stats.get_total(), 6);
-        assert_eq!(stats.get_unique(), 3);
-        assert_eq!(stats.get_duplicate(), 3);
-        assert_eq!(stats.get_rate(), 50.0);
+        assert_eq!(stats.total(), 6);
+        assert_eq!(stats.uniques(), 3);
+        assert_eq!(stats.duplicates(), 3);
+        assert_eq!(stats.rate(), 50.0);
     }
 }
