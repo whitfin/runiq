@@ -26,7 +26,7 @@ arg_enum! {
 
 /// Trait for any type which can be used to filter unique values.
 ///
-/// The filter only supports a single operation of [`Filter::detect`]
+/// The filter only supports a single operation to detect a unique
 /// which will provide the ability to check/insert in a single operation.
 pub trait Filter {
     /// Create a new instance using defaults.
