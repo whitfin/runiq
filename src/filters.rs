@@ -6,6 +6,7 @@
 //! Please see the struct documentation for further information on
 //! each filter, including their runtime characteristics.
 use fnv::FnvHashSet;
+use scalable_bloom_filter::ScalableBloomFilter;
 use std::collections::HashSet;
 use xxhash2;
 
@@ -19,6 +20,7 @@ arg_enum! {
     #[derive(Copy, Clone, Debug)]
     pub enum FilterKind {
         Consecutive,
+        Blooming,
         Digest,
         Naive,
     }
@@ -34,7 +36,7 @@ pub trait Filter {
     where
         Self: Sized;
 
-    /// Detects a duplicate value.
+    /// Detects a unique value.
     ///
     /// Return values are booleans to represent whether the value
     /// was added to the internal filter or not (i.e. `true` if
@@ -48,6 +50,7 @@ impl Into<Box<Filter>> for FilterKind {
     fn into(self) -> Box<Filter> {
         match self {
             FilterKind::Consecutive => Box::new(ConsecutiveFilter::new()),
+            FilterKind::Blooming => Box::new(BloomingFilter::new()),
             FilterKind::Digest => Box::new(DigestFilter::new()),
             FilterKind::Naive => Box::new(NaiveFilter::new()),
         }
@@ -73,7 +76,7 @@ impl Filter for NaiveFilter {
         NaiveFilter::default()
     }
 
-    /// Detects a duplicate value.
+    /// Detects a unique value.
     #[inline]
     fn detect(&mut self, input: &str) -> bool {
         self.inner.insert(input.into())
@@ -101,7 +104,7 @@ impl Filter for DigestFilter {
         DigestFilter::default()
     }
 
-    /// Detects a duplicate value.
+    /// Detects a unique value.
     #[inline]
     fn detect(&mut self, input: &str) -> bool {
         // grab the bytes from the input
@@ -140,7 +143,7 @@ impl Filter for ConsecutiveFilter {
         }
     }
 
-    /// Detects a duplicate value.
+    /// Detects a unique value.
     #[inline]
     fn detect(&mut self, input: &str) -> bool {
         // check for consec collision
@@ -150,6 +153,50 @@ impl Filter for ConsecutiveFilter {
 
         // overwrite the previous value
         self.inner = input.to_owned();
+        true
+    }
+}
+
+/// Bitset filter backed by a scalable Bloom Filter.
+///
+/// This filter operates with the least amount of memory, with a cost
+/// of speed (roughly 60-70% of the speed of the `DigestFilter`, using
+/// only 25% of the memory).
+///
+/// The backing bloom filter initializes with `1e6` bits by default, with
+/// `1e-7` probability of collisions. This is roughly comparable to the
+/// collision rate of the digest filter, so this should be chosen when
+/// memory is critical.
+#[derive(Debug)]
+pub struct BloomingFilter {
+    inner: ScalableBloomFilter<u64>,
+}
+
+/// Implement all trait methods.
+impl Filter for BloomingFilter {
+    /// Creates a new `BloomingFilter`.
+    fn new() -> BloomingFilter {
+        BloomingFilter {
+            inner: ScalableBloomFilter::new(1_000_000, 1e-7),
+        }
+    }
+
+    /// Detects a unique value.
+    #[inline]
+    fn detect(&mut self, input: &str) -> bool {
+        // grab the bytes from the input
+        let bytes = input.as_bytes();
+
+        // // create a digest from the input
+        let digest = xxhash2::hash64(bytes, 0);
+
+        // short circuit if duplicated
+        if self.inner.contains(&digest) {
+            return false;
+        }
+
+        // insert on duplicates
+        self.inner.insert(&digest);
         true
     }
 }
@@ -193,5 +240,16 @@ mod tests {
         assert_eq!(ins2, false);
         assert_eq!(ins3, true);
         assert_eq!(ins4, true);
+    }
+
+    #[test]
+    fn blooming_filter_detection() {
+        let mut filter = BloomingFilter::new();
+
+        let ins1 = filter.detect("input1");
+        let ins2 = filter.detect("input1");
+
+        assert_eq!(ins1, true);
+        assert_eq!(ins2, false);
     }
 }

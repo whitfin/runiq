@@ -19,6 +19,7 @@
 #[macro_use]
 extern crate clap;
 extern crate fnv;
+extern crate scalable_bloom_filter;
 extern crate xxhash2;
 
 // documented mods

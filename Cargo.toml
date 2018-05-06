@@ -15,4 +15,5 @@ travis-ci = { repository = "whitfin/runiq" }
 [dependencies]
 clap = "2.31"
 fnv = "1.0"
+scalable_bloom_filter = "0.1"
 xxhash2 = "0.1"
