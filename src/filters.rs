@@ -91,7 +91,7 @@ impl Filter for NaiveFilter {
 /// real consequence and is barely noticeable.
 #[derive(Clone, Debug, Default)]
 pub struct DigestFilter {
-    inner: FnvHashSet<usize>,
+    inner: FnvHashSet<u64>,
 }
 
 /// Implement all trait methods.
@@ -107,12 +107,8 @@ impl Filter for DigestFilter {
         // grab the bytes from the input
         let bytes = input.as_bytes();
 
-        // hash based on whether we're u32 or u64, for efficiency
-        let digest: usize = if cfg!(target_pointer_width = "64") {
-            xxhash2::hash64(bytes, 0) as usize
-        } else {
-            xxhash2::hash32(bytes, 0) as usize
-        };
+        // hash to u64 always, for collisions
+        let digest = xxhash2::hash64(bytes, 0);
 
         // insert the new digest
         self.inner.insert(digest)
