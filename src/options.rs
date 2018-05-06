@@ -108,6 +108,7 @@ impl Options {
             // settings required for parsing
             .settings(&[
                 AppSettings::ArgRequiredElseHelp,
+                AppSettings::HidePossibleValuesInHelp,
                 AppSettings::TrailingVarArg,
             ])
     }
