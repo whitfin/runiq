@@ -19,10 +19,10 @@ arg_enum! {
     #[doc(hidden)]
     #[derive(Copy, Clone, Debug)]
     pub enum FilterKind {
-        Consecutive,
-        Blooming,
+        Sorted,
         Digest,
         Naive,
+        Bloom,
     }
 }
 
@@ -49,10 +49,10 @@ impl Into<Box<Filter>> for FilterKind {
     /// Creates a new `Filter` type based on the enum value.
     fn into(self) -> Box<Filter> {
         match self {
-            FilterKind::Consecutive => Box::new(ConsecutiveFilter::new()),
-            FilterKind::Blooming => Box::new(BloomingFilter::new()),
+            FilterKind::Sorted => Box::new(SortedFilter::new()),
             FilterKind::Digest => Box::new(DigestFilter::new()),
             FilterKind::Naive => Box::new(NaiveFilter::new()),
+            FilterKind::Bloom => Box::new(BloomFilter::new()),
         }
     }
 }
@@ -130,15 +130,15 @@ impl Filter for DigestFilter {
 /// a good candidate for sorting your data initially and then making
 /// use of this filter to optimize memory usage going forware.
 #[derive(Clone, Debug)]
-pub struct ConsecutiveFilter {
+pub struct SortedFilter {
     inner: String,
 }
 
 /// Implement all trait methods.
-impl Filter for ConsecutiveFilter {
-    /// Creates a new `ConsecutiveFilter`.
-    fn new() -> ConsecutiveFilter {
-        ConsecutiveFilter {
+impl Filter for SortedFilter {
+    /// Creates a new `SortedFilter`.
+    fn new() -> SortedFilter {
+        SortedFilter {
             inner: "rcf_default".to_owned(),
         }
     }
@@ -168,16 +168,16 @@ impl Filter for ConsecutiveFilter {
 /// collision rate of the digest filter, so this should be chosen when
 /// memory is critical.
 #[derive(Debug)]
-pub struct BloomingFilter {
+pub struct BloomFilter {
     inner: ScalableBloomFilter<u64>,
 }
 
 /// Implement all trait methods.
-impl Filter for BloomingFilter {
-    /// Creates a new `BloomingFilter`.
-    fn new() -> BloomingFilter {
-        BloomingFilter {
-            inner: ScalableBloomFilter::new(1_000_000, 1e-7),
+impl Filter for BloomFilter {
+    /// Creates a new `BloomFilter`.
+    fn new() -> BloomFilter {
+        BloomFilter {
+            inner: ScalableBloomFilter::new(1_000_000, 1e-8),
         }
     }
 
@@ -229,7 +229,7 @@ mod tests {
 
     #[test]
     fn consecutive_filter_detection() {
-        let mut filter = ConsecutiveFilter::new();
+        let mut filter = SortedFilter::new();
 
         let ins1 = filter.detect("input1");
         let ins2 = filter.detect("input1");
