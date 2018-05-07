@@ -228,7 +228,7 @@ mod tests {
     }
 
     #[test]
-    fn consecutive_filter_detection() {
+    fn sorted_filter_detection() {
         let mut filter = SortedFilter::new();
 
         let ins1 = filter.detect("input1");
@@ -243,8 +243,8 @@ mod tests {
     }
 
     #[test]
-    fn blooming_filter_detection() {
-        let mut filter = BloomingFilter::new();
+    fn bloom_filter_detection() {
+        let mut filter = BloomFilter::new();
 
         let ins1 = filter.detect("input1");
         let ins2 = filter.detect("input1");
