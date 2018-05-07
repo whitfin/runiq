@@ -13,7 +13,6 @@
 //! distributed as a core crate if the backing implementation becomes
 //! interesting for other use cases.
 #![doc(html_root_url = "https://docs.rs/runiq/1.0.0")]
-#![deny(warnings, missing_debug_implementations)]
 
 // crate imports
 #[macro_use]
