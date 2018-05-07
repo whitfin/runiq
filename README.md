@@ -11,7 +11,7 @@ This tool will be available via [Crates.io](https://crates.io/crates/runiq), so 
 $ cargo install runiq
 ```
 
-If you'd rather just grab a pre-built binary, you can download the correct binary for your architecture directly from the latest release on GitHub [here](https://github.com/whitfin/runiq/releases). The list of binaries may not be complete, so please file an issue if your setup is missing (I might need you to build and contribute it).
+If you'd rather just grab a pre-built binary, you can download the correct binary for your architecture directly from the latest release on GitHub [here](https://github.com/whitfin/runiq/releases). The list of binaries may not be complete, so please file an issue if your setup is missing (bonus points if you attach the appropriate binary).
 
 ### Comparisons
 
