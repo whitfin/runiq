@@ -13,6 +13,30 @@ $ cargo install runiq
 
 If you'd rather just grab a pre-built binary, you might be able to download the correct binary for your architecture directly from the latest release on GitHub [here](https://github.com/whitfin/runiq/releases). The list of binaries may not be complete, so please file an issue if your setup is missing (bonus points if you attach the appropriate binary).
 
+### Examples
+
+```shell
+$ cat << EOF >> input.txt
+> this is a unique line
+> this is a duplicate line
+> this is another unique line
+> this is a duplicate line
+> this is a duplicate line
+> EOF
+
+$ cat input.txt
+this is a unique line
+this is a duplicate line
+this is another unique line
+this is a duplicate line
+this is a duplicate line
+
+$ runiq input.txt
+this is a unique line
+this is a duplicate line
+this is another unique line
+```
+
 ### Comparisons
 
 Here are some comparisons of `runiq` against other methods of filtering uniques:
