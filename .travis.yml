@@ -5,7 +5,8 @@ language: rust
 os:
   - linux
   - osx
-  - windows
+  # Fails due to cmake; Travis bug?
+  # - windows
 
 # Version matrix.
 rust:
