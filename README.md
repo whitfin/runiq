@@ -1,5 +1,5 @@
 # runiq
-[![Crates.io](https://img.shields.io/crates/v/runiq.svg)](https://crates.io/crates/runiq) [![Unix Build Status](https://img.shields.io/travis/whitfin/runiq.svg?label=unix)](https://travis-ci.org/whitfin/runiq) [![Windows Build Status](https://img.shields.io/appveyor/ci/whitfin/runiq.svg?label=win)](https://ci.appveyor.com/project/whitfin/runiq)
+[![Crates.io](https://img.shields.io/crates/v/runiq.svg)](https://crates.io/crates/runiq) [![Build Status](https://img.shields.io/travis/whitfin/runiq.svg?)](https://travis-ci.org/whitfin/runiq)
 
 This project offers an efficient way (in both time and space) to filter duplicate entries (lines) from texual input. This project was born from [neek](https://github.com/whitfin/neek), but optimized for both speed and memory. Several filtering options are supported depending on your data and tradeoffs you wish to make between speed and memory usage. For a more detailed explanation, see the relevant [blog post](https://whitfin.io/filtering-unique-logs-using-rust/).
 

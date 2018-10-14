@@ -1,10 +1,25 @@
+# Language flags.
 language: rust
+
+# OS matrix.
+os:
+  - linux
+  - osx
+  - windows
+
+# Version matrix.
 rust:
   - stable
   - beta
   - nightly
-cache:
-  cargo: true
+
+# Matrix modifications.
 matrix:
+
+  # Failures to allow.
   allow_failures:
     - rust: nightly
+
+# Cargo package caching.
+cache:
+  cargo: true
