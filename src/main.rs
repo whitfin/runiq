@@ -34,28 +34,34 @@ use options::Options;
 use statistics::Stats;
 use std::env;
 use std::fs::File;
-use std::io::{stdin, BufRead, BufReader, Read};
+use std::io::{self, BufRead, BufReader, Read, Write};
 
-fn main() {
+fn main() -> io::Result<()> {
     // parse in our options from the command line args
     let options = Options::from(&mut env::args_os());
+
+    // borrow IO for checker
+    let stdin = io::stdin();
+    let stdout = io::stdout();
 
     // ensure all sources exist as readers
     let readers: Vec<Box<Read>> = (&options.inputs)
         .into_iter()
         .map(|input| -> Box<Read> {
             match input.as_ref() {
-                "-" => Box::new(stdin()),
+                "-" => Box::new(stdin.lock()),
                 any => Box::new(File::open(any).unwrap()),
             }
-        })
-        .collect();
+        }).collect();
 
     // create boxed filter from provided option filter
     let mut filter: Box<Filter> = options.filter.into();
 
     // create statistics container for filters
     let mut statistics = Stats::new();
+
+    // lock stdout to speed up the writes
+    let mut stdout = stdout.lock();
 
     // sequential readers for now
     for reader in readers {
@@ -72,7 +78,7 @@ fn main() {
                     statistics.add_unique();
                 } else if !options.inverted {
                     // echo if not inverted
-                    println!("{}", input);
+                    stdout.write_all(input.as_bytes())?;
                 }
             } else {
                 // handle stats or print
@@ -81,7 +87,7 @@ fn main() {
                     statistics.add_duplicate();
                 } else if options.inverted {
                     // echo if we're inverted
-                    println!("{}", input);
+                    stdout.write_all(input.as_bytes())?;
                 }
             }
         }
@@ -91,4 +97,7 @@ fn main() {
     if options.statistics {
         statistics.print();
     }
+
+    // done
+    Ok(())
 }
