@@ -70,13 +70,13 @@ fn main() -> io::Result<()> {
         let mut reader = BufReader::new(reader);
         loop {
             buf.clear();
-            let bits = match reader.read_until(b'\0', &mut buf)? {
+            let bits = match reader.read_until(b'\n', &mut buf)? {
                 0 => break,
                 len => {
-                    if buf[len - 1] == b'\0' {
+                    if buf[len - 1] == b'\n' {
                         &buf[..len - 2]
                     } else {
-                        buf.push(b'\0');
+                        buf.push(b'\n');
                         &buf[..len - 1]
                     }
                 }
