@@ -74,7 +74,11 @@ fn main() -> io::Result<()> {
                 0 => break,
                 len => {
                     if buf[len - 1] == b'\n' {
-                        &buf[..len - 2]
+                        if len == 1 {
+                            &buf[..0]
+                        } else {
+                            &buf[..len - 2]
+                        }
                     } else {
                         buf.push(b'\n');
                         &buf[..len - 1]
