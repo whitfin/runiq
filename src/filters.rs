@@ -41,7 +41,7 @@ pub trait Filter {
     /// Return values are booleans to represent whether the value
     /// was added to the internal filter or not (i.e. `true` if
     /// this is the first time the value has been seen).
-    fn detect(&mut self, input: &str) -> bool;
+    fn detect(&mut self, input: &[u8]) -> bool;
 }
 
 /// Implement `Into` to convert to `Filter`.
@@ -66,7 +66,7 @@ impl Into<Box<Filter>> for FilterKind {
 /// calculating unique collisions in inputs.
 #[derive(Clone, Debug, Default)]
 pub struct NaiveFilter {
-    inner: HashSet<String>,
+    inner: HashSet<Vec<u8>>,
 }
 
 /// Implement all trait methods.
@@ -78,8 +78,8 @@ impl Filter for NaiveFilter {
 
     /// Detects a unique value.
     #[inline]
-    fn detect(&mut self, input: &str) -> bool {
-        self.inner.insert(input.into())
+    fn detect(&mut self, input: &[u8]) -> bool {
+        self.inner.insert(input.to_vec())
     }
 }
 
@@ -106,10 +106,7 @@ impl Filter for DigestFilter {
 
     /// Detects a unique value.
     #[inline]
-    fn detect(&mut self, input: &str) -> bool {
-        // grab the bytes from the input
-        let bytes = input.as_bytes();
-
+    fn detect(&mut self, bytes: &[u8]) -> bool {
         // hash to u64 always, for collisions
         let digest = xxhash2::hash64(bytes, 0);
 
@@ -131,28 +128,26 @@ impl Filter for DigestFilter {
 /// use of this filter to optimize memory usage going forware.
 #[derive(Clone, Debug)]
 pub struct SortedFilter {
-    inner: String,
+    inner: Vec<u8>,
 }
 
 /// Implement all trait methods.
 impl Filter for SortedFilter {
     /// Creates a new `SortedFilter`.
     fn new() -> SortedFilter {
-        SortedFilter {
-            inner: "rcf_default".to_owned(),
-        }
+        SortedFilter { inner: vec![] }
     }
 
     /// Detects a unique value.
     #[inline]
-    fn detect(&mut self, input: &str) -> bool {
+    fn detect(&mut self, input: &[u8]) -> bool {
         // check for consec collision
-        if input == self.inner {
+        if *input == self.inner[..] {
             return false;
         }
 
         // overwrite the previous value
-        self.inner = input.to_owned();
+        self.inner = input.to_vec();
         true
     }
 }
@@ -183,10 +178,7 @@ impl Filter for BloomFilter {
 
     /// Detects a unique value.
     #[inline]
-    fn detect(&mut self, input: &str) -> bool {
-        // grab the bytes from the input
-        let bytes = input.as_bytes();
-
+    fn detect(&mut self, bytes: &[u8]) -> bool {
         // // create a digest from the input
         let digest = xxhash2::hash64(bytes, 0);
 
@@ -209,8 +201,8 @@ mod tests {
     fn naive_filter_detection() {
         let mut filter = NaiveFilter::new();
 
-        let ins1 = filter.detect("input1");
-        let ins2 = filter.detect("input1");
+        let ins1 = filter.detect(b"input1");
+        let ins2 = filter.detect(b"input1");
 
         assert_eq!(ins1, true);
         assert_eq!(ins2, false);
@@ -220,8 +212,8 @@ mod tests {
     fn digest_filter_detection() {
         let mut filter = DigestFilter::new();
 
-        let ins1 = filter.detect("input1");
-        let ins2 = filter.detect("input1");
+        let ins1 = filter.detect(b"input1");
+        let ins2 = filter.detect(b"input1");
 
         assert_eq!(ins1, true);
         assert_eq!(ins2, false);
@@ -231,10 +223,10 @@ mod tests {
     fn sorted_filter_detection() {
         let mut filter = SortedFilter::new();
 
-        let ins1 = filter.detect("input1");
-        let ins2 = filter.detect("input1");
-        let ins3 = filter.detect("input2");
-        let ins4 = filter.detect("input1");
+        let ins1 = filter.detect(b"input1");
+        let ins2 = filter.detect(b"input1");
+        let ins3 = filter.detect(b"input2");
+        let ins4 = filter.detect(b"input1");
 
         assert_eq!(ins1, true);
         assert_eq!(ins2, false);
@@ -246,8 +238,8 @@ mod tests {
     fn bloom_filter_detection() {
         let mut filter = BloomFilter::new();
 
-        let ins1 = filter.detect("input1");
-        let ins2 = filter.detect("input1");
+        let ins1 = filter.detect(b"input1");
+        let ins2 = filter.detect(b"input1");
 
         assert_eq!(ins1, true);
         assert_eq!(ins2, false);

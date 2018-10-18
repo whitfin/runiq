@@ -34,19 +34,21 @@ use options::Options;
 use statistics::Stats;
 use std::env;
 use std::fs::File;
-use std::io::{stdin, BufRead, BufReader, Read};
+use std::io::{self, stdin, BufRead, BufReader, Read, Write};
 
-fn main() {
+fn main() -> io::Result<()> {
     // parse in our options from the command line args
     let options = Options::from(&mut env::args_os());
+
+    let sin = stdin();
 
     // ensure all sources exist as readers
     let readers: Vec<Box<Read>> = (&options.inputs)
         .into_iter()
         .map(|input| -> Box<Read> {
             match input.as_ref() {
-                "-" => Box::new(stdin()),
-                any => Box::new(File::open(any).unwrap()),
+                "-" => Box::new(sin.lock()),
+                any => Box::new(File::open(any).expect(&format!("Couldn't open {}", input))),
             }
         })
         .collect();
@@ -57,31 +59,50 @@ fn main() {
     // create statistics container for filters
     let mut statistics = Stats::new();
 
+    let mut buf = Vec::with_capacity(100);
+
+    let stdout = io::stdout();
+    let mut stdout = stdout.lock();
+
     // sequential readers for now
     for reader in readers {
         // iterate every line coming from the reader
-        for line in BufReader::new(reader).lines() {
-            // unwrap the next input
-            let input = line.unwrap();
+        let mut reader = BufReader::new(reader);
+        loop {
+            buf.clear();
+            let bits = match reader.read_until(b'\0', &mut buf)? {
+                0 => break,
+                len => {
+                    if buf[len - 1] == b'\0' {
+                        &buf[..len - 2]
+                    } else {
+                        buf.push(b'\0');
+                        &buf[..len - 1]
+                    }
+                }
+            };
 
             // detect duplicate value
-            if filter.detect(&input) {
+            if filter.detect(&bits) {
                 // handle stats or print
                 if options.statistics {
                     // add a unique count
                     statistics.add_unique();
-                } else if !options.inverted {
-                    // echo if not inverted
-                    println!("{}", input);
                 }
+                if !options.inverted {
+                    // echo if not inverted
+                    stdout.write_all(&buf)?;
+                }
+
+            // handle stats or print
             } else {
-                // handle stats or print
                 if options.statistics {
                     // add a duplicate count
                     statistics.add_duplicate();
-                } else if options.inverted {
+                }
+                if options.inverted {
                     // echo if we're inverted
-                    println!("{}", input);
+                    stdout.write_all(&buf)?;
                 }
             }
         }
@@ -91,4 +112,6 @@ fn main() {
     if options.statistics {
         statistics.print();
     }
+
+    Ok(())
 }
