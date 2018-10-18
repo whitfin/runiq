@@ -73,7 +73,6 @@ impl Options {
             .name(env!("CARGO_PKG_NAME"))
             .about(env!("CARGO_PKG_DESCRIPTION"))
             .version(env!("CARGO_PKG_VERSION"))
-
             // arguments and flag details
             .args(&[
                 // filter: -f, --filter [naive]
@@ -85,26 +84,22 @@ impl Options {
                     .possible_values(&FilterKind::variants())
                     .set(ArgSettings::CaseInsensitive)
                     .set(ArgSettings::HideDefaultValue),
-
                 // inputs: +required +multiple
                 Arg::with_name("inputs")
                     .help("Input sources to filter")
                     .multiple(true)
                     .required(true),
-
                 // invert: -i --invert
                 Arg::with_name("invert")
                     .help("Prints duplicates instead of uniques")
                     .short("i")
                     .long("invert"),
-
                 // statistics: -s --statistics
                 Arg::with_name("statistics")
                     .help("Prints statistics instead of entries")
                     .short("s")
                     .long("statistics"),
             ])
-
             // settings required for parsing
             .settings(&[
                 AppSettings::ArgRequiredElseHelp,
