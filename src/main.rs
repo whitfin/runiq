@@ -63,12 +63,42 @@ fn main() -> io::Result<()> {
     // lock stdout to speed up the writes
     let mut stdout = stdout.lock();
 
+    // alloc vector with arbitrary start capacity
+    let mut buf = Vec::with_capacity(128);
+
     // sequential readers for now
     for reader in readers {
-        // iterate every line coming from the reader
-        for line in BufReader::new(reader).lines() {
-            // unwrap the next input
-            let input = line.unwrap();
+        // wrap the reader in a BufReader
+        let mut reader = BufReader::new(reader);
+
+        loop {
+            // reset bytes
+            buf.clear();
+
+            // iterate every line coming from the reader (but as bytes)
+            let input = match reader.read_until(b'\n', &mut buf) {
+                // short circuit on error
+                Err(e) => return Err(e),
+                // no input, done
+                Ok(0) => break,
+                // bytes!
+                Ok(n) => {
+                    // always use full buffer
+                    let mut trim = &buf[..];
+
+                    // always "pop" the delim
+                    if trim[n - 1] == b'\n' {
+                        trim = &trim[..n - 1];
+                    }
+
+                    // also "pop" a leading \r
+                    if trim[n - 1] == b'\r' {
+                        trim = &trim[..n - 1];
+                    }
+
+                    trim
+                }
+            };
 
             // detect duplicate value
             if filter.detect(&input) {
@@ -78,7 +108,7 @@ fn main() -> io::Result<()> {
                     statistics.add_unique();
                 } else if !options.inverted {
                     // echo if not inverted
-                    stdout.write_all(input.as_bytes())?;
+                    stdout.write_all(input)?;
                 }
             } else {
                 // handle stats or print
@@ -87,7 +117,7 @@ fn main() -> io::Result<()> {
                     statistics.add_duplicate();
                 } else if options.inverted {
                     // echo if we're inverted
-                    stdout.write_all(input.as_bytes())?;
+                    stdout.write_all(input)?;
                 }
             }
         }
