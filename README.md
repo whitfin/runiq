@@ -46,9 +46,9 @@ Here are some comparisons of `runiq` against other methods of filtering uniques:
 | neek  | N/A       | 55.8s          | 313MB           |
 | sort  | -u        | 595s           | 9.07GB          |
 | uq    | N/A       | 32.3s          | 1.66GB          |
-| runiq | -f digest | **25.3s**      | 64.6MB          |
-| runiq | -f naive  | 32.2s          | 1.62GB          |
-| runiq | -f bloom  | 44.5s          | **13MB**        |
+| runiq | -f digest | **17.8s**      | 64.6MB          |
+| runiq | -f naive  | 26.3s          | 1.62GB          |
+| runiq | -f bloom  | 36.8s          | **13MB**        |
 
 The numbers above are based on filtering unique values out of the following file:
 
