@@ -5,6 +5,7 @@
 //!
 //! Please see the struct documentation for further information on
 //! each filter, including their runtime characteristics.
+use clap::*;
 use fnv::FnvHashSet;
 use scalable_bloom_filter::ScalableBloomFilter;
 use std::collections::HashSet;

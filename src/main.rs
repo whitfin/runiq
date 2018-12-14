@@ -13,28 +13,20 @@
 //! distributed as a core crate if the backing implementation becomes
 //! interesting for other use cases.
 #![doc(html_root_url = "https://docs.rs/runiq/1.1.0")]
-
-// crate imports
-#[macro_use]
-extern crate clap;
-extern crate fnv;
-extern crate scalable_bloom_filter;
-extern crate xxhash2;
-
-// documented mods
 pub mod filters;
 
-// priv mods
 mod options;
 mod statistics;
 
-// scope requirements
-use filters::Filter;
-use options::Options;
-use statistics::Stats;
+use bytelines::ByteLinesReader;
+
+use crate::filters::Filter;
+use crate::options::Options;
+use crate::statistics::Stats;
+
 use std::env;
 use std::fs::File;
-use std::io::{self, BufRead, BufReader, Read, Write};
+use std::io::{self, BufReader, Read, Write};
 
 fn main() -> io::Result<()> {
     // parse in our options from the command line args
@@ -52,7 +44,8 @@ fn main() -> io::Result<()> {
                 "-" => Box::new(stdin.lock()),
                 any => Box::new(File::open(any).unwrap()),
             }
-        }).collect();
+        })
+        .collect();
 
     // create boxed filter from provided option filter
     let mut filter: Box<Filter> = options.filter.into();
@@ -63,42 +56,12 @@ fn main() -> io::Result<()> {
     // lock stdout to speed up the writes
     let mut stdout = stdout.lock();
 
-    // alloc vector with arbitrary start capacity
-    let mut buf = Vec::with_capacity(128);
-
     // sequential readers for now
     for reader in readers {
-        // wrap the reader in a BufReader
-        let mut reader = BufReader::new(reader);
-
-        loop {
-            // reset bytes
-            buf.clear();
-
-            // iterate every line coming from the reader (but as bytes)
-            let input = match reader.read_until(b'\n', &mut buf) {
-                // short circuit on error
-                Err(e) => return Err(e),
-                // no input, done
-                Ok(0) => break,
-                // bytes!
-                Ok(n) => {
-                    // always use full buffer
-                    let mut trim = &buf[..];
-
-                    // always "pop" the delim
-                    if trim[n - 1] == b'\n' {
-                        trim = &trim[..n - 1];
-                    }
-
-                    // also "pop" a leading \r
-                    if trim[n - 1] == b'\r' {
-                        trim = &trim[..n - 1];
-                    }
-
-                    trim
-                }
-            };
+        // iterate all lines (unsafe is ok due to for-loop syntax)
+        for line in unsafe { BufReader::new(reader).ref_byte_lines() } {
+            // unwrap the input line
+            let input = line?;
 
             // detect duplicate value
             if filter.detect(&input) {

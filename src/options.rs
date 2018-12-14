@@ -3,8 +3,8 @@
 //! Nothing particularly important to see here, just typical
 //! parsing of things like command line arguments into something
 //! more easily used internally (from the main application flow).
-use clap::{App, AppSettings, Arg, ArgSettings};
-use filters::FilterKind;
+use crate::filters::FilterKind;
+use clap::{value_t, App, AppSettings, Arg, ArgSettings};
 use std::ffi::OsString;
 
 /// Options struct to store configuration state.
@@ -73,7 +73,6 @@ impl Options {
             .name(env!("CARGO_PKG_NAME"))
             .about(env!("CARGO_PKG_DESCRIPTION"))
             .version(env!("CARGO_PKG_VERSION"))
-
             // arguments and flag details
             .args(&[
                 // filter: -f, --filter [naive]
@@ -85,26 +84,22 @@ impl Options {
                     .possible_values(&FilterKind::variants())
                     .set(ArgSettings::CaseInsensitive)
                     .set(ArgSettings::HideDefaultValue),
-
                 // inputs: +required +multiple
                 Arg::with_name("inputs")
                     .help("Input sources to filter")
                     .multiple(true)
                     .required(true),
-
                 // invert: -i --invert
                 Arg::with_name("invert")
                     .help("Prints duplicates instead of uniques")
                     .short("i")
                     .long("invert"),
-
                 // statistics: -s --statistics
                 Arg::with_name("statistics")
                     .help("Prints statistics instead of entries")
                     .short("s")
                     .long("statistics"),
             ])
-
             // settings required for parsing
             .settings(&[
                 AppSettings::ArgRequiredElseHelp,

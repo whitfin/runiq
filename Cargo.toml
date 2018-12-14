@@ -7,12 +7,14 @@ repository = "https://github.com/whitfin/runiq"
 keywords = ["filtering", "logging", "unique"]
 categories = ["algorithms", "command-line-utilities", "text-processing"]
 readme = "README.md"
+edition = "2018"
 license = "MIT"
 
 [badges]
 travis-ci = { repository = "whitfin/runiq" }
 
 [dependencies]
+bytelines = "1.0"
 clap = "2.32"
 fnv = "1.0"
 scalable_bloom_filter = "0.1"
