@@ -1,6 +1,6 @@
 [package]
 name = "runiq"
-version = "1.1.1" # remember to update html_root_url
+version = "1.1.2" # remember to update html_root_url
 authors = ["Isaac Whitfield <iw@whitfin.io>"]
 description = "An efficient way to filter duplicate lines from input, à la uniq."
 repository = "https://github.com/whitfin/runiq"
