@@ -56,7 +56,8 @@ fn main() -> io::Result<()> {
     // lock stdout to speed up the writes
     let mut stdout = stdout.lock();
 
-    let eol = [b'\n'];
+    // eol byte slice
+    let eol = &[b'\n'];
 
     // sequential readers for now
     for reader in readers {
@@ -74,7 +75,7 @@ fn main() -> io::Result<()> {
                 } else if !options.inverted {
                     // echo if not inverted
                     stdout.write_all(input)?;
-                    stdout.write(&eol)?;
+                    stdout.write_all(eol)?;
                 }
             } else {
                 // handle stats or print
@@ -84,7 +85,7 @@ fn main() -> io::Result<()> {
                 } else if options.inverted {
                     // echo if we're inverted
                     stdout.write_all(input)?;
-                    stdout.write(&eol)?;
+                    stdout.write_all(eol)?;
                 }
             }
         }
