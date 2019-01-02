@@ -96,6 +96,9 @@ fn main() -> io::Result<()> {
         statistics.print();
     }
 
+    // flush buffers
+    stdout.flush()?;
+
     // done
     Ok(())
 }
