@@ -61,8 +61,11 @@ fn main() -> io::Result<()> {
 
     // sequential readers for now
     for reader in readers {
-        // iterate all lines (unsafe is ok due to for-loop syntax)
-        for line in unsafe { BufReader::new(reader).ref_byte_lines() } {
+        // construct our line reader to iterate lines of bytes
+        let mut lines = BufReader::new(reader).byte_lines();
+
+        // iterate all lines as &[u8] slices
+        while let Some(line) = lines.next() {
             // unwrap the input line
             let input = line?;
 
