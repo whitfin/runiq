@@ -28,6 +28,8 @@ use std::env;
 use std::fs::File;
 use std::io::{self, BufReader, Read, Write};
 
+const EOL: &[u8; 1] = &[b'\n'];
+
 fn main() -> io::Result<()> {
     // parse in our options from the command line args
     let options = Options::from(&mut env::args_os());
@@ -38,7 +40,7 @@ fn main() -> io::Result<()> {
 
     // ensure all sources exist as readers
     let readers: Vec<Box<Read>> = (&options.inputs)
-        .into_iter()
+        .iter()
         .map(|input| -> Box<Read> {
             match input.as_ref() {
                 "-" => Box::new(stdin.lock()),
@@ -55,9 +57,6 @@ fn main() -> io::Result<()> {
 
     // lock stdout to speed up the writes
     let mut stdout = stdout.lock();
-
-    // eol byte slice
-    let eol = &[b'\n'];
 
     // sequential readers for now
     for reader in readers {
@@ -78,7 +77,7 @@ fn main() -> io::Result<()> {
                 } else if !options.inverted {
                     // echo if not inverted
                     stdout.write_all(input)?;
-                    stdout.write_all(eol)?;
+                    stdout.write_all(EOL)?;
                 }
             } else {
                 // handle stats or print
@@ -88,7 +87,7 @@ fn main() -> io::Result<()> {
                 } else if options.inverted {
                     // echo if we're inverted
                     stdout.write_all(input)?;
-                    stdout.write_all(eol)?;
+                    stdout.write_all(EOL)?;
                 }
             }
         }
