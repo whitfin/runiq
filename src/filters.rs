@@ -126,7 +126,7 @@ impl Filter for DigestFilter {
 ///
 /// Remember that repeatedly running Runiq on the same input would be
 /// a good candidate for sorting your data initially and then making
-/// use of this filter to optimize memory usage going forware.
+/// use of this filter to optimize memory usage going forward.
 #[derive(Clone, Debug)]
 pub struct SortedFilter {
     inner: Vec<u8>,

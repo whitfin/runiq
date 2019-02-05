@@ -61,12 +61,12 @@ impl Stats {
 
     /// Prints all statistics to stdout.
     pub fn print(&self) {
-        println!("");
+        println!();
         uprintln("Unique Count", self.uniques(), 1);
         uprintln("Total Count", self.total(), 2);
         uprintln("Dup Offset", self.duplicates(), 3);
         println!("Dup Rate:{:>22.2}%", 100.0 - self.rate());
-        println!("");
+        println!();
     }
 }
 
