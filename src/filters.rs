@@ -11,7 +11,7 @@ use scalable_bloom_filter::ScalableBloomFilter;
 use std::collections::HashSet;
 use xxhash2;
 
-/// Enumerable filters for clap-rs.
+// Enumerable filters for clap-rs.
 arg_enum! {
     /// Enum to store all possible variants of filters.
     ///
@@ -46,9 +46,9 @@ pub trait Filter {
 }
 
 /// Implement `Into` to convert to `Filter`.
-impl Into<Box<Filter>> for FilterKind {
+impl Into<Box<dyn Filter>> for FilterKind {
     /// Creates a new `Filter` type based on the enum value.
-    fn into(self) -> Box<Filter> {
+    fn into(self) -> Box<dyn Filter> {
         match self {
             FilterKind::Sorted => Box::new(SortedFilter::new()),
             FilterKind::Digest => Box::new(DigestFilter::new()),

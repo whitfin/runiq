@@ -39,9 +39,9 @@ fn main() -> io::Result<()> {
     let stdout = io::stdout();
 
     // ensure all sources exist as readers
-    let readers: Vec<Box<Read>> = (&options.inputs)
+    let readers: Vec<Box<dyn Read>> = (&options.inputs)
         .iter()
-        .map(|input| -> Box<Read> {
+        .map(|input| -> Box<dyn Read> {
             match input.as_ref() {
                 "-" => Box::new(stdin.lock()),
                 any => Box::new(File::open(any).unwrap()),
@@ -50,7 +50,7 @@ fn main() -> io::Result<()> {
         .collect();
 
     // create boxed filter from provided option filter
-    let mut filter: Box<Filter> = options.filter.into();
+    let mut filter: Box<dyn Filter> = options.filter.into();
 
     // create statistics container for filters
     let mut statistics = Stats::new();
