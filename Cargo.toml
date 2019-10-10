@@ -14,8 +14,8 @@ license = "MIT"
 travis-ci = { repository = "whitfin/runiq" }
 
 [dependencies]
-bytelines = "2.1"
-clap = "2.32"
+bytelines = "2.2"
+clap = "2.33"
 fnv = "1.0"
 scalable_bloom_filter = "0.1"
 xxhash2 = "0.1"

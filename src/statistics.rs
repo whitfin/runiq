@@ -152,6 +152,6 @@ mod tests {
         assert_eq!(stats.total(), 6);
         assert_eq!(stats.uniques(), 3);
         assert_eq!(stats.duplicates(), 3);
-        assert_eq!(stats.rate(), 50.0);
+        assert_eq!(stats.rate() as u16, 50);
     }
 }
