@@ -18,6 +18,7 @@ pub struct Options {
     pub filter: FilterKind,
     pub inputs: Vec<String>,
     pub inverted: bool,
+    pub collect_counts: bool,
     pub statistics: bool,
 }
 
@@ -47,6 +48,9 @@ impl Options {
 
             // grab and store inversion flags
             inverted: options.is_present("invert"),
+
+            // Include counts in the output
+            collect_counts: options.is_present("count"),
 
             // store the filter to use for unique detection
             filter: filter.unwrap_or(FilterKind::Digest),
@@ -94,6 +98,11 @@ impl Options {
                     .help("Prints duplicates instead of uniques")
                     .short("i")
                     .long("invert"),
+                // collect_counts: -c --count
+                Arg::with_name("count")
+                    .help("Print count before each unique line")
+                    .short("c")
+                    .long("count"),
                 // statistics: -s --statistics
                 Arg::with_name("statistics")
                     .help("Prints statistics instead of entries")

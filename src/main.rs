@@ -27,6 +27,8 @@ use crate::statistics::Stats;
 use std::env;
 use std::fs::File;
 use std::io::{self, BufReader, Read, Write};
+// use IndexMap to preserve input order of lines
+use indexmap::IndexMap;
 
 const EOL: &[u8; 1] = &[b'\n'];
 
@@ -58,6 +60,14 @@ fn main() -> io::Result<()> {
     // lock stdout to speed up the writes
     let mut stdout = stdout.lock();
 
+    // create a line->count mapping for the --count option
+    // Note that this uses memory for every unique line in the
+    // file, so it is not suitable for very large files.
+    // This is inherent in the requirement to include counts,
+    // though, as it is not possible to write any output until
+    // all input is processed if you want to include counts.
+    let mut line_counts = IndexMap::<Vec<u8>, u32>::new();
+
     // sequential readers for now
     for reader in readers {
         // construct our line reader to iterate lines of bytes
@@ -74,6 +84,8 @@ fn main() -> io::Result<()> {
                 if options.statistics {
                     // add a unique count
                     statistics.add_unique();
+                } else if options.collect_counts {
+                    line_counts.insert(input.to_vec(), 1);
                 } else if !options.inverted {
                     // echo if not inverted
                     stdout.write_all(input)?;
@@ -84,6 +96,9 @@ fn main() -> io::Result<()> {
                 if options.statistics {
                     // add a duplicate count
                     statistics.add_duplicate();
+                } else if options.collect_counts {
+                    let counter = line_counts.entry(input.to_vec()).or_insert(0);
+                    *counter += 1;
                 } else if options.inverted {
                     // echo if we're inverted
                     stdout.write_all(input)?;
@@ -96,6 +111,14 @@ fn main() -> io::Result<()> {
     // handle stats logging
     if options.statistics {
         statistics.print();
+    }
+
+    if options.collect_counts {
+        for (line, count) in &line_counts {
+            print!("{} ", count);
+            stdout.write_all(line)?;
+            stdout.write_all(EOL)?;
+        }
     }
 
     // flush buffers
