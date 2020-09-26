@@ -12,7 +12,7 @@
 //! Runiq is only built as a command line tool, although it may be
 //! distributed as a core crate if the backing implementation becomes
 //! interesting for other use cases.
-#![doc(html_root_url = "https://docs.rs/runiq/1.1.4")]
+#![doc(html_root_url = "https://docs.rs/runiq/1.2.0")]
 pub mod filters;
 
 mod options;
