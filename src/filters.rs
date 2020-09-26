@@ -8,8 +8,10 @@
 use clap::*;
 use fnv::FnvHashSet;
 use scalable_bloom_filter::ScalableBloomFilter;
+use twox_hash::XxHash64;
+
 use std::collections::HashSet;
-use xxhash2;
+use std::hash::Hasher;
 
 // Enumerable filters for clap-rs.
 arg_enum! {
@@ -108,11 +110,8 @@ impl Filter for DigestFilter {
     /// Detects a unique value.
     #[inline]
     fn detect(&mut self, input: &[u8]) -> bool {
-        // hash to u64 always, for collisions
-        let digest = xxhash2::hash64(input, 0);
-
-        // insert the new digest
-        self.inner.insert(digest)
+        // insert as a hashed digest
+        self.inner.insert(hash(input))
     }
 }
 
@@ -180,8 +179,8 @@ impl Filter for BloomFilter {
     /// Detects a unique value.
     #[inline]
     fn detect(&mut self, input: &[u8]) -> bool {
-        // // create a digest from the input
-        let digest = xxhash2::hash64(input, 0);
+        // create a digest from the input
+        let digest = hash(input);
 
         // short circuit if duplicated
         if self.inner.contains(&digest) {
@@ -192,6 +191,18 @@ impl Filter for BloomFilter {
         self.inner.insert(&digest);
         true
     }
+}
+
+/// Small hash binding around `Hasher`.
+fn hash(input: &[u8]) -> u64 {
+    // create a new default hasher
+    let mut hasher = XxHash64::default();
+
+    // write the bytes to the hasher
+    hasher.write(input);
+
+    // finish the hash
+    hasher.finish()
 }
 
 #[cfg(test)]
