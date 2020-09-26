@@ -5,14 +5,17 @@ language: rust
 os:
   - linux
   - osx
-  # Fails due to cmake; Travis bug?
-  # - windows
+  - windows
 
 # Version matrix.
 rust:
   - stable
   - beta
   - nightly
+
+# Cargo caching.
+cache:
+  cargo: true
 
 # Matrix modifications.
 matrix:
@@ -21,6 +24,19 @@ matrix:
   allow_failures:
     - rust: nightly
 
-# Cargo package caching.
-cache:
-  cargo: true
+  # Additional builds.
+  include:
+
+    # Clippy linting.
+    - rust: stable
+      os: linux
+      script:
+        - rustup component add clippy
+        - cargo clippy --all --profile test
+
+    # Format linting.
+    - rust: stable
+      os: linux
+      script:
+        - rustup component add rustfmt
+        - cargo fmt --all -- --check
