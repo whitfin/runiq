@@ -69,7 +69,7 @@ fn main() -> io::Result<()> {
             let input = line?;
 
             // detect duplicate value
-            if filter.detect(&input) {
+            if filter.detect(input) {
                 // handle stats or print
                 if options.statistics {
                     // add a unique count

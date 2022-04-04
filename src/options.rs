@@ -4,7 +4,7 @@
 //! parsing of things like command line arguments into something
 //! more easily used internally (from the main application flow).
 use crate::filters::FilterKind;
-use clap::{value_t, App, AppSettings, Arg, ArgSettings};
+use clap::{Arg, ArgEnum, Command};
 use std::ffi::OsString;
 
 /// Options struct to store configuration state.
@@ -38,7 +38,7 @@ impl Options {
         let options = parser.get_matches_from(args);
 
         // attempt to parse the provided filter
-        let filter = value_t!(options.value_of("filter"), FilterKind);
+        let filter = options.value_of_t::<FilterKind>("filter");
 
         // create opts
         Options {
@@ -67,8 +67,8 @@ impl Options {
     ///
     /// In terms of visibility, this method is defined on the struct due to
     /// the parser being specifically designed around the `Options` struct.
-    fn create_parser<'a, 'b>() -> App<'a, 'b> {
-        App::new("")
+    fn create_parser<'a>() -> Command<'a> {
+        Command::new("")
             // package metadata from cargo
             .name(env!("CARGO_PKG_NAME"))
             .about(env!("CARGO_PKG_DESCRIPTION"))
@@ -76,35 +76,37 @@ impl Options {
             // arguments and flag details
             .args(&[
                 // filter: -f, --filter [naive]
-                Arg::with_name("filter")
+                Arg::new("filter")
                     .help("Filter to use to determine uniqueness")
-                    .short("f")
+                    .short('f')
                     .long("filter")
                     .takes_value(true)
-                    .possible_values(&FilterKind::variants())
-                    .set(ArgSettings::CaseInsensitive)
-                    .set(ArgSettings::HideDefaultValue),
+                    .possible_values(
+                        FilterKind::value_variants()
+                            .iter()
+                            .filter_map(ArgEnum::to_possible_value),
+                    )
+                    .hide_default_value(true)
+                    .ignore_case(true),
                 // inputs: +required +multiple
-                Arg::with_name("inputs")
+                Arg::new("inputs")
                     .help("Input sources to filter")
-                    .multiple(true)
+                    .multiple_occurrences(true)
                     .required(true),
                 // invert: -i --invert
-                Arg::with_name("invert")
+                Arg::new("invert")
                     .help("Prints duplicates instead of uniques")
-                    .short("i")
+                    .short('i')
                     .long("invert"),
                 // statistics: -s --statistics
-                Arg::with_name("statistics")
+                Arg::new("statistics")
                     .help("Prints statistics instead of entries")
-                    .short("s")
+                    .short('s')
                     .long("statistics"),
             ])
             // settings required for parsing
-            .settings(&[
-                AppSettings::ArgRequiredElseHelp,
-                AppSettings::HidePossibleValuesInHelp,
-                AppSettings::TrailingVarArg,
-            ])
+            .arg_required_else_help(true)
+            .hide_possible_values(true)
+            .trailing_var_arg(true)
     }
 }

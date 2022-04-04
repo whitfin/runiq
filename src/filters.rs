@@ -12,20 +12,33 @@ use twox_hash::XxHash64;
 
 use std::collections::HashSet;
 use std::hash::Hasher;
+use std::str::FromStr;
 
-// Enumerable filters for clap-rs.
-arg_enum! {
-    /// Enum to store all possible variants of filters.
-    ///
-    /// This will implement the `Into` trait in order to create a new
-    /// boxed filter from a filter kind to keep conversion contained.
-    #[doc(hidden)]
-    #[derive(Copy, Clone, Debug)]
-    pub enum FilterKind {
-        Sorted,
-        Digest,
-        Naive,
-        Bloom,
+/// Enum to store all possible variants of filters.
+///
+/// This will implement the `Into` trait in order to create a new
+/// boxed filter from a filter kind to keep conversion contained.
+#[doc(hidden)]
+#[derive(ArgEnum, Copy, Clone, Debug)]
+pub enum FilterKind {
+    Sorted,
+    Digest,
+    Naive,
+    Bloom,
+}
+
+// FromStr impl for `FilterKind` for arg parsing.
+impl FromStr for FilterKind {
+    type Err = String;
+
+    /// Converts an input string to a `FilterKind` value.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        for variant in Self::value_variants() {
+            if variant.to_possible_value().unwrap().matches(s, false) {
+                return Ok(*variant);
+            }
+        }
+        Err(format!("Invalid variant: {}", s))
     }
 }
 
@@ -47,11 +60,11 @@ pub trait Filter {
     fn detect(&mut self, input: &[u8]) -> bool;
 }
 
-/// Implement `Into` to convert to `Filter`.
-impl Into<Box<dyn Filter>> for FilterKind {
+/// Implement `From` to convert to `Filter`.
+impl From<FilterKind> for Box<dyn Filter> {
     /// Creates a new `Filter` type based on the enum value.
-    fn into(self) -> Box<dyn Filter> {
-        match self {
+    fn from(kind: FilterKind) -> Self {
+        match kind {
             FilterKind::Sorted => Box::new(SortedFilter::new()),
             FilterKind::Digest => Box::new(DigestFilter::new()),
             FilterKind::Naive => Box::new(NaiveFilter::new()),
@@ -216,8 +229,8 @@ mod tests {
         let ins1 = filter.detect(b"input1");
         let ins2 = filter.detect(b"input1");
 
-        assert_eq!(ins1, true);
-        assert_eq!(ins2, false);
+        assert!(ins1);
+        assert!(!ins2);
     }
 
     #[test]
@@ -227,8 +240,8 @@ mod tests {
         let ins1 = filter.detect(b"input1");
         let ins2 = filter.detect(b"input1");
 
-        assert_eq!(ins1, true);
-        assert_eq!(ins2, false);
+        assert!(ins1);
+        assert!(!ins2);
     }
 
     #[test]
@@ -240,10 +253,10 @@ mod tests {
         let ins3 = filter.detect(b"input2");
         let ins4 = filter.detect(b"input1");
 
-        assert_eq!(ins1, true);
-        assert_eq!(ins2, false);
-        assert_eq!(ins3, true);
-        assert_eq!(ins4, true);
+        assert!(ins1);
+        assert!(!ins2);
+        assert!(ins3);
+        assert!(ins4);
     }
 
     #[test]
@@ -253,7 +266,7 @@ mod tests {
         let ins1 = filter.detect(b"input1");
         let ins2 = filter.detect(b"input1");
 
-        assert_eq!(ins1, true);
-        assert_eq!(ins2, false);
+        assert!(ins1);
+        assert!(!ins2);
     }
 }
