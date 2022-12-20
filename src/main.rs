@@ -30,6 +30,17 @@ use std::io::{self, BufReader, Read, Write};
 
 const EOL: &[u8; 1] = &[b'\n'];
 
+/// Returns early if pipe is broken
+macro_rules! write_pipe {
+    ($dst:expr, $bytes:expr) => {
+        match $dst.write_all($bytes) {
+            Err(e) if e.kind() == io::ErrorKind::BrokenPipe => return Ok(()),
+            e @ Err(_) => return e,
+            _ => {}
+        }
+    };
+}
+
 fn main() -> io::Result<()> {
     // parse in our options from the command line args
     let options = Options::from(&mut env::args_os());
@@ -76,8 +87,8 @@ fn main() -> io::Result<()> {
                     statistics.add_unique();
                 } else if !options.inverted {
                     // echo if not inverted
-                    stdout.write_all(input)?;
-                    stdout.write_all(EOL)?;
+                    write_pipe!(stdout, input);
+                    write_pipe!(stdout, EOL);
                 }
             } else {
                 // handle stats or print
@@ -86,8 +97,8 @@ fn main() -> io::Result<()> {
                     statistics.add_duplicate();
                 } else if options.inverted {
                     // echo if we're inverted
-                    stdout.write_all(input)?;
-                    stdout.write_all(EOL)?;
+                    write_pipe!(stdout, input);
+                    write_pipe!(stdout, EOL);
                 }
             }
         }
