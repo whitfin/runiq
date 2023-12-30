@@ -3,6 +3,10 @@
 //! Very little is exposed from this module aside from the `Stats`
 //! struct which contains tracking based on unique counters.
 
+use cli_table::format::{Border, Justify, Separator};
+use cli_table::{print_stdout, Cell, Row, RowStruct, Table};
+use format_num::NumberFormat;
+
 /// Statistics struct to store metrics.
 ///
 /// Currently only provides the following:
@@ -61,42 +65,33 @@ impl Stats {
 
     /// Prints all statistics to stdout.
     pub fn print(&self) {
-        println!();
-        uprintln("Unique Count", self.uniques(), 1);
-        uprintln("Total Count", self.total(), 2);
-        uprintln("Dup Offset", self.duplicates(), 3);
-        println!("Dup Rate:{:>22.2}%", 100.0 - self.rate());
-        println!();
+        let num = NumberFormat::new();
+        let table = vec![
+            create_row(&num, "Unique Count:", self.uniques() as f64, ",.0"),
+            create_row(&num, "Total Count:", self.total() as f64, ",.0"),
+            create_row(&num, "Dup Offset:", self.duplicates() as f64, ",.0"),
+            create_row(
+                &num,
+                "Dup Rate:",
+                ((100.0 - self.rate()) / 100.0) as f64,
+                ",.2%",
+            ),
+        ]
+        .table()
+        .border(Border::builder().build())
+        .separator(Separator::builder().build());
+
+        print_stdout(table).expect("unable to print stats table")
     }
 }
 
-/// Prints a u64 stats value against a label.
-///
-/// The label and value are provided alongside an offset used purely
-/// for alignment when displayed in a terminal, since we don't want
-/// to depend on a table drawing library just for this :).
-///
-/// This implementation is borrowed from the `separator` crate from
-/// [this repo](https://github.com/saghm/rust-separator).
-#[inline]
-fn uprintln(label: &str, value: u64, offset: usize) {
-    let str_value = value.to_string();
-
-    let mut output = String::new();
-    let mut place = str_value.len();
-    let mut later_loop = false;
-
-    for ch in str_value.chars() {
-        if later_loop && place % 3 == 0 {
-            output.push(',');
-        }
-
-        output.push(ch);
-        later_loop = true;
-        place -= 1;
-    }
-
-    println!("{}:{:>w$}", label, output, w = 18 + offset);
+/// Constructs a table row using a label and value.
+fn create_row(num: &NumberFormat, label: &str, value: f64, fmt: &str) -> RowStruct {
+    vec![
+        format!("\x08{}", label).cell(),
+        num.format(fmt, value).cell().justify(Justify::Right),
+    ]
+    .row()
 }
 
 #[cfg(test)]

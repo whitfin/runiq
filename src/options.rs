@@ -4,7 +4,7 @@
 //! parsing of things like command line arguments into something
 //! more easily used internally (from the main application flow).
 use crate::filters::FilterKind;
-use clap::{Arg, ArgEnum, Command};
+use clap::{value_parser, Arg, ArgAction, Command};
 use std::ffi::OsString;
 
 /// Options struct to store configuration state.
@@ -38,22 +38,22 @@ impl Options {
         let options = parser.get_matches_from(args);
 
         // attempt to parse the provided filter
-        let filter = options.value_of_t::<FilterKind>("filter");
+        let filter = options.get_one::<FilterKind>("filter");
 
         // create opts
         Options {
             // grab and store statistics flags
-            statistics: options.is_present("statistics"),
+            statistics: options.get_flag("statistics"),
 
             // grab and store inversion flags
-            inverted: options.is_present("invert"),
+            inverted: options.get_flag("invert"),
 
             // store the filter to use for unique detection
-            filter: filter.unwrap_or(FilterKind::Digest),
+            filter: filter.unwrap_or(&FilterKind::Digest).to_owned(),
 
             // own all inputs
             inputs: options
-                .values_of("inputs")
+                .get_many::<String>("inputs")
                 .unwrap()
                 .map(|s| s.to_owned())
                 .collect(),
@@ -67,7 +67,7 @@ impl Options {
     ///
     /// In terms of visibility, this method is defined on the struct due to
     /// the parser being specifically designed around the `Options` struct.
-    fn create_parser<'a>() -> Command<'a> {
+    fn create_parser() -> Command {
         Command::new("")
             // package metadata from cargo
             .name(env!("CARGO_PKG_NAME"))
@@ -80,29 +80,27 @@ impl Options {
                     .help("Filter to use to determine uniqueness")
                     .short('f')
                     .long("filter")
-                    .takes_value(true)
-                    .possible_values(
-                        FilterKind::value_variants()
-                            .iter()
-                            .filter_map(ArgEnum::to_possible_value),
-                    )
+                    .num_args(1)
+                    .value_parser(value_parser!(FilterKind))
                     .hide_default_value(true)
                     .ignore_case(true),
                 // inputs: +required +multiple
                 Arg::new("inputs")
                     .help("Input sources to filter")
-                    .multiple_occurrences(true)
-                    .required(true),
+                    .action(ArgAction::Append)
+                    .default_value("-"),
                 // invert: -i --invert
                 Arg::new("invert")
                     .help("Prints duplicates instead of uniques")
                     .short('i')
-                    .long("invert"),
+                    .long("invert")
+                    .action(ArgAction::SetTrue),
                 // statistics: -s --statistics
                 Arg::new("statistics")
                     .help("Prints statistics instead of entries")
                     .short('s')
-                    .long("statistics"),
+                    .long("statistics")
+                    .action(ArgAction::SetTrue),
             ])
             // settings required for parsing
             .arg_required_else_help(true)

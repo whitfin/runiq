@@ -19,7 +19,7 @@ use std::str::FromStr;
 /// This will implement the `Into` trait in order to create a new
 /// boxed filter from a filter kind to keep conversion contained.
 #[doc(hidden)]
-#[derive(ArgEnum, Copy, Clone, Debug)]
+#[derive(ValueEnum, Copy, Clone, Debug)]
 pub enum FilterKind {
     Sorted,
     Digest,

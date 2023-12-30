@@ -32,14 +32,15 @@ const EOL: &[u8; 1] = &[b'\n'];
 
 fn main() -> io::Result<()> {
     // parse in our options from the command line args
-    let options = Options::from(&mut env::args_os());
+    let options = Options::from(env::args_os());
 
     // borrow IO for checker
     let stdin = io::stdin();
     let stdout = io::stdout();
 
     // ensure all sources exist as readers
-    let readers: Vec<Box<dyn Read>> = (&options.inputs)
+    let readers: Vec<Box<dyn Read>> = options
+        .inputs
         .iter()
         .map(|input| -> Box<dyn Read> {
             match input.as_ref() {

@@ -10,12 +10,11 @@ readme = "README.md"
 edition = "2018"
 license = "MIT"
 
-[badges]
-travis-ci = { repository = "whitfin/runiq" }
-
 [dependencies]
 bytelines = "2.4"
-clap = { version = "3.1", features = ["derive"] }
+clap = { version = "4.4", features = ["derive"] }
+cli-table = "0.4"
 fnv = "1.0"
+format_num = "0.1"
 scalable_bloom_filter = "0.1"
 twox-hash = "1.6"
