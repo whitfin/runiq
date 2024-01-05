@@ -9,20 +9,18 @@
 //! Having said this, it should be a goal to perform at least as fast
 //! as other tools of the same ilk.
 //!
-//! Runiq is only built as a command line tool, although it may be
-//! distributed as a core crate if the backing implementation becomes
-//! interesting for other use cases.
-#![doc(html_root_url = "https://docs.rs/runiq/1.2.2")]
-pub mod filters;
+//! Runiq is built mainly as a command line tool, although it can be
+//! used as a library as the `Filter` trait is exposed publicly. If
+//! you are using Runiq as a library, do **not** rely on any modules
+//! hidden from the public documentation.
+use bytelines::ByteLinesReader;
 
 mod options;
 mod statistics;
 
-use bytelines::ByteLinesReader;
-
-use crate::filters::Filter;
 use crate::options::Options;
 use crate::statistics::Stats;
+use runiq::Filter;
 
 use std::env;
 use std::fs::File;

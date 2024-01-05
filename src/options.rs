@@ -3,8 +3,8 @@
 //! Nothing particularly important to see here, just typical
 //! parsing of things like command line arguments into something
 //! more easily used internally (from the main application flow).
-use crate::filters::FilterKind;
 use clap::{value_parser, Arg, ArgAction, Command};
+use runiq::Filters;
 use std::ffi::OsString;
 
 /// Options struct to store configuration state.
@@ -15,7 +15,7 @@ use std::ffi::OsString;
 /// (in essence) as application configuration.
 #[derive(Clone, Debug)]
 pub struct Options {
-    pub filter: FilterKind,
+    pub filter: Filters,
     pub inputs: Vec<String>,
     pub inverted: bool,
     pub statistics: bool,
@@ -38,7 +38,7 @@ impl Options {
         let options = parser.get_matches_from(args);
 
         // attempt to parse the provided filter
-        let filter = options.get_one::<FilterKind>("filter");
+        let filter = options.get_one::<Filters>("filter");
 
         // create opts
         Options {
@@ -81,7 +81,7 @@ impl Options {
                     .short('f')
                     .long("filter")
                     .num_args(1)
-                    .value_parser(value_parser!(FilterKind))
+                    .value_parser(value_parser!(Filters))
                     .hide_default_value(true)
                     .default_value("quick")
                     .ignore_case(true),

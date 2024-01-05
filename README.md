@@ -5,13 +5,23 @@ This project offers an efficient way (in both time and space) to filter duplicat
 
 ### Installation
 
-This tool will be available via [Crates.io](https://crates.io/crates/runiq), so you can install it directly with `cargo`:
+Runiq will be available via [Crates.io](https://crates.io/crates/runiq), so it can be installed from there directly. You can use Runiq either as a command line utility, or directly via the programmatic API.
+
+If you wish to install Runiq as a command line utility, you can install it via an easy one-liner in your terminal:
 
 ```shell
+# install as a binary
 $ cargo install runiq
 ```
 
-If you'd rather just grab a pre-built binary, you might be able to download the correct binary for your architecture directly from the latest release on GitHub [here](https://github.com/whitfin/runiq/releases). The list of binaries may not be complete, so please file an issue if your setup is missing (bonus points if you attach the appropriate binary).
+If you wish to use it as a library, you can add it to your `Cargo.toml` as a dependency of your application:
+
+```toml
+[dependencies]
+runiq = { version = "2.0", default-features = false }
+```
+
+You should disable the default features as it includes several dependencies which are required for the CLI use case. These dependencies are not included in your application when these features are disabled.
 
 ### Examples
 

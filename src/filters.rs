@@ -5,78 +5,24 @@
 //!
 //! Please see the struct documentation for further information on
 //! each filter, including their runtime characteristics.
-use clap::*;
 use growable_bloom_filter::{GrowableBloom, GrowableBloomBuilder};
 use identity_hash::BuildIdentityHasher;
+use strum_macros::EnumString;
 use xxhash_rust::xxh3::xxh3_64;
 
 use std::collections::HashSet;
-use std::str::FromStr;
-
-/// Enum to store all possible variants of filters.
-///
-/// This will implement the `Into` trait in order to create a new
-/// boxed filter from a filter kind to keep conversion contained.
-#[doc(hidden)]
-#[derive(Copy, Clone, Debug, ValueEnum)]
-pub enum FilterKind {
-    /// Hashed comparisons with more efficient throughput.
-    Quick,
-
-    /// Naive comparisons of strings within a set.
-    Simple,
-
-    /// Adjacent comparisons on sorted data (similar to uniq).
-    Sorted,
-
-    /// Bloom filter comparisons with compact memory usage.
-    Compact,
-}
-
-// FromStr impl for `FilterKind` for arg parsing.
-impl FromStr for FilterKind {
-    type Err = String;
-
-    /// Converts an input string to a `FilterKind` value.
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        for variant in Self::value_variants() {
-            if variant.to_possible_value().unwrap().matches(s, false) {
-                return Ok(*variant);
-            }
-        }
-        Err(format!("Invalid variant: {}", s))
-    }
-}
 
 /// Trait for any type which can be used to filter unique values.
 ///
-/// The filter only supports a single operation to detect a unique
+/// The filter only supports a single operation to detect a unique input
 /// which will provide the ability to check/insert in a single operation.
 pub trait Filter {
-    /// Create a new instance using defaults.
-    fn new() -> Self
-    where
-        Self: Sized;
-
     /// Detects a unique value.
     ///
     /// Return values are booleans to represent whether the value
     /// was added to the internal filter or not (i.e. `true` if
     /// this is the first time the value has been seen).
     fn detect(&mut self, input: &[u8]) -> bool;
-}
-
-/// Implement `From` to convert to `Filter`.
-impl From<FilterKind> for Box<dyn Filter> {
-    /// Creates a new `Filter` type based on the enum value.
-    fn from(kind: FilterKind) -> Self {
-        match kind {
-            FilterKind::Quick => Box::new(QuickFilter::new()),
-            FilterKind::Simple => Box::new(SimpleFilter::new()),
-            FilterKind::Compact => Box::new(CompactFilter::new()),
-            FilterKind::Sorted => Box::new(SortedFilter::new()),
-        }
-    }
 }
 
 /// Basic filter implementation backed by a `HashSet`.
@@ -93,13 +39,6 @@ pub struct SimpleFilter {
 
 /// Implement all trait methods.
 impl Filter for SimpleFilter {
-    /// Creates a new `SimpleFilter`.
-    fn new() -> Self {
-        Self::default()
-    }
-
-    /// Detects a unique value.
-    #[inline]
     fn detect(&mut self, input: &[u8]) -> bool {
         self.inner.insert(input.to_vec())
     }
@@ -121,13 +60,6 @@ pub struct QuickFilter {
 
 /// Implement all trait methods.
 impl Filter for QuickFilter {
-    /// Creates a new `QuickFilter`.
-    fn new() -> Self {
-        Self::default()
-    }
-
-    /// Detects a unique value.
-    #[inline]
     fn detect(&mut self, input: &[u8]) -> bool {
         self.inner.insert(xxh3_64(input))
     }
@@ -144,20 +76,13 @@ impl Filter for QuickFilter {
 /// Remember that repeatedly running Runiq on the same input would be
 /// a good candidate for sorting your data initially and then making
 /// use of this filter to optimize memory usage going forward.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct SortedFilter {
     inner: Vec<u8>,
 }
 
 /// Implement all trait methods.
 impl Filter for SortedFilter {
-    /// Creates a new `SortedFilter`.
-    fn new() -> Self {
-        Self { inner: Vec::new() }
-    }
-
-    /// Detects a unique value.
-    #[inline]
     fn detect(&mut self, input: &[u8]) -> bool {
         // check for consec collision
         if input == &self.inner[..] {
@@ -185,10 +110,8 @@ pub struct CompactFilter {
     inner: GrowableBloom,
 }
 
-/// Implement all trait methods.
-impl Filter for CompactFilter {
-    /// Creates a new `CompactFilter`.
-    fn new() -> Self {
+impl Default for CompactFilter {
+    fn default() -> Self {
         Self {
             inner: GrowableBloomBuilder::new()
                 .estimated_insertions(1_000_000)
@@ -198,11 +121,45 @@ impl Filter for CompactFilter {
                 .build(),
         }
     }
+}
 
-    /// Detects a unique value.
-    #[inline]
+/// Implement all trait methods.
+impl Filter for CompactFilter {
     fn detect(&mut self, input: &[u8]) -> bool {
         self.inner.insert(xxh3_64(input))
+    }
+}
+
+/// Enum to store all possible variants of filters.
+///
+/// This will implement the `Into` trait in order to create a new
+/// boxed filter from a filter kind to keep conversion contained.
+#[derive(Copy, Clone, Debug, EnumString)]
+#[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
+pub enum Filters {
+    /// Hashed comparisons with more efficient throughput.
+    Quick,
+
+    /// Naive comparisons of strings within a set.
+    Simple,
+
+    /// Adjacent comparisons on sorted data (similar to uniq).
+    Sorted,
+
+    /// Bloom filter comparisons with compact memory usage.
+    Compact,
+}
+
+/// Implement `From` to convert to `Filter`.
+impl From<Filters> for Box<dyn Filter> {
+    /// Creates a new `Filter` type based on the enum value.
+    fn from(kind: Filters) -> Self {
+        match kind {
+            Filters::Quick => Box::new(QuickFilter::default()),
+            Filters::Simple => Box::new(SimpleFilter::default()),
+            Filters::Compact => Box::new(CompactFilter::default()),
+            Filters::Sorted => Box::new(SortedFilter::default()),
+        }
     }
 }
 
@@ -212,7 +169,7 @@ mod tests {
 
     #[test]
     fn naive_filter_detection() {
-        let mut filter = SimpleFilter::new();
+        let mut filter = SimpleFilter::default();
 
         let ins1 = filter.detect(b"input1");
         let ins2 = filter.detect(b"input1");
@@ -223,7 +180,7 @@ mod tests {
 
     #[test]
     fn digest_filter_detection() {
-        let mut filter = QuickFilter::new();
+        let mut filter = QuickFilter::default();
 
         let ins1 = filter.detect(b"input1");
         let ins2 = filter.detect(b"input1");
@@ -234,7 +191,7 @@ mod tests {
 
     #[test]
     fn sorted_filter_detection() {
-        let mut filter = SortedFilter::new();
+        let mut filter = SortedFilter::default();
 
         let ins1 = filter.detect(b"input1");
         let ins2 = filter.detect(b"input1");
@@ -249,7 +206,7 @@ mod tests {
 
     #[test]
     fn bloom_filter_detection() {
-        let mut filter = CompactFilter::new();
+        let mut filter = CompactFilter::default();
 
         let ins1 = filter.detect(b"input1");
         let ins2 = filter.detect(b"input1");
