@@ -155,10 +155,10 @@ impl From<Filters> for Box<dyn Filter> {
     /// Creates a new `Filter` type based on the enum value.
     fn from(kind: Filters) -> Self {
         match kind {
-            Filters::Quick => Box::new(QuickFilter::default()),
-            Filters::Simple => Box::new(SimpleFilter::default()),
-            Filters::Compact => Box::new(CompactFilter::default()),
-            Filters::Sorted => Box::new(SortedFilter::default()),
+            Filters::Quick => Box::<QuickFilter>::default(),
+            Filters::Simple => Box::<SimpleFilter>::default(),
+            Filters::Compact => Box::<CompactFilter>::default(),
+            Filters::Sorted => Box::<SortedFilter>::default(),
         }
     }
 }
