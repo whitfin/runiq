@@ -6,12 +6,11 @@
 //! Please see the struct documentation for further information on
 //! each filter, including their runtime characteristics.
 use clap::*;
-use fnv::FnvHashSet;
-use scalable_bloom_filter::ScalableBloomFilter;
-use twox_hash::XxHash64;
+use growable_bloom_filter::{GrowableBloom, GrowableBloomBuilder};
+use identity_hash::BuildIdentityHasher;
+use xxhash_rust::xxh3::xxh3_64;
 
 use std::collections::HashSet;
-use std::hash::Hasher;
 use std::str::FromStr;
 
 /// Enum to store all possible variants of filters.
@@ -88,8 +87,8 @@ pub struct NaiveFilter {
 /// Implement all trait methods.
 impl Filter for NaiveFilter {
     /// Creates a new `NaiveFilter`.
-    fn new() -> NaiveFilter {
-        NaiveFilter::default()
+    fn new() -> Self {
+        Self::default()
     }
 
     /// Detects a unique value.
@@ -110,21 +109,21 @@ impl Filter for NaiveFilter {
 /// real consequence and is barely noticeable.
 #[derive(Clone, Debug, Default)]
 pub struct DigestFilter {
-    inner: FnvHashSet<u64>,
+    inner: HashSet<u64, BuildIdentityHasher<u64>>,
 }
 
 /// Implement all trait methods.
 impl Filter for DigestFilter {
     /// Creates a new `DigestFilter`.
-    fn new() -> DigestFilter {
-        DigestFilter::default()
+    fn new() -> Self {
+        Self::default()
     }
 
     /// Detects a unique value.
     #[inline]
     fn detect(&mut self, input: &[u8]) -> bool {
         // insert as a hashed digest
-        self.inner.insert(hash(input))
+        self.inner.insert(xxh3_64(input))
     }
 }
 
@@ -147,8 +146,8 @@ pub struct SortedFilter {
 /// Implement all trait methods.
 impl Filter for SortedFilter {
     /// Creates a new `SortedFilter`.
-    fn new() -> SortedFilter {
-        SortedFilter { inner: Vec::new() }
+    fn new() -> Self {
+        Self { inner: Vec::new() }
     }
 
     /// Detects a unique value.
@@ -177,45 +176,28 @@ impl Filter for SortedFilter {
 /// memory is critical.
 #[derive(Debug)]
 pub struct BloomFilter {
-    inner: ScalableBloomFilter<u64>,
+    inner: GrowableBloom,
 }
 
 /// Implement all trait methods.
 impl Filter for BloomFilter {
     /// Creates a new `BloomFilter`.
-    fn new() -> BloomFilter {
-        BloomFilter {
-            inner: ScalableBloomFilter::new(1_000_000, 1e-8),
+    fn new() -> Self {
+        Self {
+            inner: GrowableBloomBuilder::new()
+                .estimated_insertions(1_000_000)
+                .desired_error_ratio(1e-8)
+                .growth_factor(2)
+                .tightening_ratio(0.5)
+                .build(),
         }
     }
 
     /// Detects a unique value.
     #[inline]
     fn detect(&mut self, input: &[u8]) -> bool {
-        // create a digest from the input
-        let digest = hash(input);
-
-        // short circuit if duplicated
-        if self.inner.contains(&digest) {
-            return false;
-        }
-
-        // insert on duplicates
-        self.inner.insert(&digest);
-        true
+        self.inner.insert(xxh3_64(input))
     }
-}
-
-/// Small hash binding around `Hasher`.
-fn hash(input: &[u8]) -> u64 {
-    // create a new default hasher
-    let mut hasher = XxHash64::default();
-
-    // write the bytes to the hasher
-    hasher.write(input);
-
-    // finish the hash
-    hasher.finish()
 }
 
 #[cfg(test)]
