@@ -112,7 +112,6 @@ impl Options {
             ])
             // settings required for parsing
             .disable_help_subcommand(true)
-            .arg_required_else_help(true)
             .disable_help_flag(true)
             .trailing_var_arg(true)
     }
