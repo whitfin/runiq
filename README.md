@@ -25,6 +25,8 @@ You should disable the default features as it includes several dependencies whic
 
 ### Examples
 
+Below are a few examples of using the Runiq CLI to filter duplicates out of input text.
+
 ```shell
 $ cat << EOF >> input.txt
 this is a unique line
@@ -46,6 +48,8 @@ this is a unique line
 this is a duplicate line
 this is another unique line
 ```
+
+For examples of the programmatic API, please see [the examples](./examples/basic.rs).
 
 ### Filters
 
