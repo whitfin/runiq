@@ -67,7 +67,7 @@ Runiq comes with several "filters", which control exactly how uniqueness is veri
     * This is naturally extremely low on resources, with very minimal memory overhead.
     * Obviously has a requirement that your input values be sorted.
 * `compact`
-    * The `compact` filter (heh) uses a scaling Bloom Filter to determine uniqueness.
+    * The `compact` filter uses a scaling Bloom Filter to determine uniqueness.
     * Performs very quickly due to small structures, with a minimal memory overhead.
     * Perfect accuracy is no longer guaranteed; there can be rare cases of false positives.
     * Best used for statistics on files, although will remain near perfect for millions of records.
