@@ -29,6 +29,18 @@ use std::io::{self, BufReader, Read, Write};
 const EOL: &[u8; 1] = &[b'\n'];
 
 fn main() -> io::Result<()> {
+    let result = run();
+
+    if let Err(ref err) = result {
+        if err.kind() != io::ErrorKind::BrokenPipe {
+            return result;
+        }
+    }
+
+    Ok(())
+}
+
+fn run() -> io::Result<()> {
     // parse in our options from the command line args
     let options = Options::from(env::args_os());
 
