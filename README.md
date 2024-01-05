@@ -59,7 +59,7 @@ Runiq comes with several "filters", which control exactly how uniqueness is veri
     * This results in much lower memory overhead than `naive`, with comparably throughput.
     * Depending on your input lengths, throughput can actually be faster than `naive`.
 * `simple`
-    * The `naive` filter uses basic `Set` implementations to determine uniqueness.
+    * The `simple` filter uses basic `Set` implementations to determine uniqueness.
     * Offers a fairly good throughput, while still effectively guaranteeing accuracy.
     * As all inputs are stored, the memory requirement scales linearly to your input sizes.
 * `sorted`
