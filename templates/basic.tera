@@ -1,6 +1,16 @@
 {
-    "age": {{ integer(start=18, end=99) }},
-    "name": "{{ lastName() }}",
-    "state": "{{ state() }}",
-    "occupation": "{{ profession() }}"
+    {% set rp = 1 %}
+    {% set age = integer(start=18, end=99) %}
+    {% set name = lastName() %}
+    {% set state = state() %}
+    {% set occupation = profession() %}
+    {% for idx in range(end=rp) %}
+        "age{{ idx }}": {{ age }},
+        "name{{ idx }}": "{{ name }}",
+        "state{{ idx }}": "{{ state }}",
+        "occupation{{ idx }}": "{{ occupation }}"
+        {% if idx != (rp - 1) %}
+            ,
+        {% endif %}
+    {% endfor %}
 }
