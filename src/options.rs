@@ -49,7 +49,7 @@ impl Options {
             inverted: options.get_flag("invert"),
 
             // store the filter to use for unique detection
-            filter: filter.unwrap_or(&FilterKind::Digest).to_owned(),
+            filter: filter.unwrap_or(&FilterKind::Quick).to_owned(),
 
             // own all inputs
             inputs: options

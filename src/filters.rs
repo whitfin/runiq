@@ -18,12 +18,19 @@ use std::str::FromStr;
 /// This will implement the `Into` trait in order to create a new
 /// boxed filter from a filter kind to keep conversion contained.
 #[doc(hidden)]
-#[derive(ValueEnum, Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, ValueEnum)]
 pub enum FilterKind {
+    /// Hashed comparisons with more efficient throughput.
+    Quick,
+
+    /// Naive comparisons of strings within a set.
+    Simple,
+
+    /// Adjacent comparisons on sorted data (similar to uniq).
     Sorted,
-    Digest,
-    Naive,
-    Bloom,
+
+    /// Bloom filter comparisons with compact memory usage.
+    Compact,
 }
 
 // FromStr impl for `FilterKind` for arg parsing.
@@ -64,10 +71,10 @@ impl From<FilterKind> for Box<dyn Filter> {
     /// Creates a new `Filter` type based on the enum value.
     fn from(kind: FilterKind) -> Self {
         match kind {
+            FilterKind::Quick => Box::new(QuickFilter::new()),
+            FilterKind::Simple => Box::new(SimpleFilter::new()),
+            FilterKind::Compact => Box::new(CompactFilter::new()),
             FilterKind::Sorted => Box::new(SortedFilter::new()),
-            FilterKind::Digest => Box::new(DigestFilter::new()),
-            FilterKind::Naive => Box::new(NaiveFilter::new()),
-            FilterKind::Bloom => Box::new(BloomFilter::new()),
         }
     }
 }
@@ -80,13 +87,13 @@ impl From<FilterKind> for Box<dyn Filter> {
 /// efficient, but it is guaranteed to be completely accurate when
 /// calculating unique collisions in inputs.
 #[derive(Clone, Debug, Default)]
-pub struct NaiveFilter {
+pub struct SimpleFilter {
     inner: HashSet<Vec<u8>>,
 }
 
 /// Implement all trait methods.
-impl Filter for NaiveFilter {
-    /// Creates a new `NaiveFilter`.
+impl Filter for SimpleFilter {
+    /// Creates a new `SimpleFilter`.
     fn new() -> Self {
         Self::default()
     }
@@ -101,20 +108,20 @@ impl Filter for NaiveFilter {
 /// Digest filter implementation backed by a `HashSet`.
 ///
 /// This implementation offers much better memory efficiency when
-/// compared to the `NaiveFilter` due to the fact that raw values
+/// compared to the `SimpleFilter` due to the fact that raw values
 /// are hashed to `usize` values before being stored in the set.
 ///
 /// It's also a little faster due to some improved efficiency
 /// when comparing values in the set itself, but it's not of any
 /// real consequence and is barely noticeable.
 #[derive(Clone, Debug, Default)]
-pub struct DigestFilter {
+pub struct QuickFilter {
     inner: HashSet<u64, BuildIdentityHasher<u64>>,
 }
 
 /// Implement all trait methods.
-impl Filter for DigestFilter {
-    /// Creates a new `DigestFilter`.
+impl Filter for QuickFilter {
+    /// Creates a new `QuickFilter`.
     fn new() -> Self {
         Self::default()
     }
@@ -122,7 +129,6 @@ impl Filter for DigestFilter {
     /// Detects a unique value.
     #[inline]
     fn detect(&mut self, input: &[u8]) -> bool {
-        // insert as a hashed digest
         self.inner.insert(xxh3_64(input))
     }
 }
@@ -167,7 +173,7 @@ impl Filter for SortedFilter {
 /// Bitset filter backed by a scalable Bloom Filter.
 ///
 /// This filter operates with the least amount of memory, with a cost
-/// of speed (roughly 60-70% of the speed of the `DigestFilter`, using
+/// of speed (roughly 60-70% of the speed of the `QuickFilter`, using
 /// only 25% of the memory).
 ///
 /// The backing bloom filter initializes with `1e6` bits by default, with
@@ -175,13 +181,13 @@ impl Filter for SortedFilter {
 /// collision rate of the digest filter, so this should be chosen when
 /// memory is critical.
 #[derive(Debug)]
-pub struct BloomFilter {
+pub struct CompactFilter {
     inner: GrowableBloom,
 }
 
 /// Implement all trait methods.
-impl Filter for BloomFilter {
-    /// Creates a new `BloomFilter`.
+impl Filter for CompactFilter {
+    /// Creates a new `CompactFilter`.
     fn new() -> Self {
         Self {
             inner: GrowableBloomBuilder::new()
@@ -206,7 +212,7 @@ mod tests {
 
     #[test]
     fn naive_filter_detection() {
-        let mut filter = NaiveFilter::new();
+        let mut filter = SimpleFilter::new();
 
         let ins1 = filter.detect(b"input1");
         let ins2 = filter.detect(b"input1");
@@ -217,7 +223,7 @@ mod tests {
 
     #[test]
     fn digest_filter_detection() {
-        let mut filter = DigestFilter::new();
+        let mut filter = QuickFilter::new();
 
         let ins1 = filter.detect(b"input1");
         let ins2 = filter.detect(b"input1");
@@ -243,7 +249,7 @@ mod tests {
 
     #[test]
     fn bloom_filter_detection() {
-        let mut filter = BloomFilter::new();
+        let mut filter = CompactFilter::new();
 
         let ins1 = filter.detect(b"input1");
         let ins2 = filter.detect(b"input1");

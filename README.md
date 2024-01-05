@@ -41,20 +41,20 @@ this is another unique line
 
 Runiq comes with several "filters", which control exactly how uniqueness is verified. Each of these filters has different use cases, and excels in different ways.
 
+* `quick`
+    * The `quick` filter works the same way as the `naive` filter, except values are pre-hashed.
+    * This results in much lower memory overhead than `naive`, with comparably throughput.
+    * Depending on your input lengths, throughput can actually be faster than `naive`.
+* `simple`
+    * The `naive` filter uses basic `Set` implementations to determine uniqueness.
+    * Offers a fairly good throughput, while still effectively guaranteeing accuracy.
+    * As all inputs are stored, the memory requirement scales linearly to your input sizes.
 * `sorted`
     * The `sorted` filter acts much the same way as the standard `uniq` tool, by only detecting sequential duplicates.
     * This is naturally extremely low on resources, with very minimal memory overhead.
     * Obviously has a requirement that your input values be sorted.
-* `naive`
-    * The `naive` filter uses basic `Set` implementations to determine uniqueness.
-    * Offers a fairly good throughput, while still effectively guaranteeing accuracy.
-    * As all inputs are stored, the memory requirement scales linearly to your input sizes.
-* `digest`
-    * The `digest` filter works the same way as the `naive` filter, except values are pre-hashed.
-    * This results in much lower memory overhead than `naive`, with comparably throughput.
-    * Depending on your input lengths, throughput can actually be faster than `naive`.
-* `bloom`
-    * The `bloom` filter (heh) uses a scaling Bloom Filter to determine uniqueness.
+* `compact`
+    * The `compact` filter (heh) uses a scaling Bloom Filter to determine uniqueness.
     * Performs very quickly due to small structures, with a minimal memory overhead.
     * Perfect accuracy is no longer guaranteed; there can be rare cases of false positives.
     * Best used for statistics on files, although will remain near perfect for millions of records.
@@ -64,54 +64,54 @@ Runiq comes with several "filters", which control exactly how uniqueness is veri
 
 To grab some rough comparisons of `runiq` against other methods of filtering uniques, we can use some sample data. This data is generated via [Jen](https://github.com/whitfin/jen) using the templates provided in the corresponding directory. You can create your own templates to more closely match your use case for a better comparison.
 
-To start with, we'll generate a sample dataset of 25,000,000 JSON documents using the [basic](./templates/basic.tera) template. This template will result in an approximate 20% duplication rate (randomly dotted around the file) at this scale.
+To start with, we'll generate a sample dataset of 25,000,000 JSON documents using the [basic](./templates/basic.tera) template. This template will result in an approximate 20% duplication rate (randomly dotted around the file) at this scale. Note that for longer inputs, you can tweak the `rp` value inside the template to cause repetition of fields.
 
 ```
 $ jen templates/basic.tera -l 25000000 > 25000000.jsonl
 
-File Size:     1,813,645,568 (~1.8 GB)
+File Size:     1,913,658,811 (~1.9 GB)
 Total Count:      25,000,000
-Unique Count:     19,833,427
-Dup Offset:        5,166,573
+Unique Count:     19,832,571
+Dup Offset:        5,167,429
 Dup Rate:             20.67%
 ```
 
 We can then run this sample dataset through the various filters of `runiq`, as well as some other tools to gauge how we're doing. These numbers are *not* meant to be a competition. They are simply a point of reference for myself when testing improvements. It is definitely possible that other tools might fit your data shape better.
 
-| Tool  | Flags     | Time (Unsorted) | Memory (Unsorted) | Time (Sorted) | Memory (Sorted) |
-|:------|:----------|----------------:|------------------:|--------------:|----------------:|
-| uniq  | N/A       | N/A             | N/A               | 26.3s         | 1.6MB           |
-| sort  | -u        | 369.7s          | 7.95GB            | 71.6s         | 7.77GB          |
-| uq    | N/A       | 22.7s           | 2.31GB            | 22.7s         | 2.31GB          |
-| huniq | N/A       | 11.9s           | 298.5MB           | 11.6s         | 299.8MB         |
-| runiq | -f naive  | 19.8s           | 2.28GB            | 18.7s         | 2.29GB          |
-| runiq | -f digest | 12.2s           | 298.7MB           | 11.8s         | 299.6MB         |
-| runiq | -f bloom  | 17.8s           | 162.4MB           | 17.1s         | 162.3MB         |
-| runiq | -f sorted | N/A             | N/A               | 10.4s         | 1.3MB           |
+| Tool  | Flags      | Time (Unsorted) | Memory (Unsorted) | Time (Sorted) | Memory (Sorted) |
+|:------|:-----------|----------------:|------------------:|--------------:|----------------:|
+| uniq  | N/A        | N/A             | N/A               | 24.9s         | 1.6MB           |
+| sort  | -u         | 380.2s          | 8.33GB            | 58.7s         | 8.15GB          |
+| uq    | N/A        | 22.6s           | 2.34GB            | 21.0s         | 2.34GB          |
+| huniq | N/A        | 11.9s           | 298.5MB           | 11.6s         | 300.7MB         |
+| runiq | -f quick   | 12.1s           | 298.7MB           | 11.8s         | 298.5MB         |
+| runiq | -f simple  | 19.7s           | 2.33GB            | 18.2s         | 2.33GB          |
+| runiq | -f sorted  | N/A             | N/A               | 10.3s         | 1.3MB           |
+| runiq | -f compact | 17.8s           | 162.2MB           | 16.2s         | 162.3MB         |
 
 For another point of comparison, we'll repeat these tests with a sample of 100,000,000 JSON documents (so 4x the first test). In this case, the duplicate rate will rise to approximtely 55% using the same template:
 
 ```
 $ jen templates/basic.tera -l 100000000 > 100000000.jsonl
 
-File Size:     7,254,585,942 (~7.3 GB)
+File Size:     7,654,658,706 (~7.7 GB)
 Total Count:     100,000,000
-Unique Count:     44,302,820
-Dup Offset:       55,697,180
-Dup Rate:             55.70%
+Unique Count:     44,305,712
+Dup Offset:       55,694,288
+Dup Rate:             55.69%
 ```
 
-| Tool  | Flags     | Time (Unsorted) | Memory (Unsorted) | Time (Sorted) | Memory (Sorted) |
-|:------|:----------|----------------:|------------------:|--------------:|----------------:|
-| uniq  | N/A       | N/A             | N/A               | 98.7s         | 1.8MB           |
-| sort  | -u        | 2717.8s         | 12.72GB           | 358.7s        | 12.42GB         |
-| uq    | N/A       | 76.7s           | 4.93GB            | 58.8s         | 4.93GB          |
-| huniq | N/A       | 31.5s           | 587.3MB           | 29.8s         | 589.2MB         |
-| runiq | -f naive  | 67.3s           | 4.91GB            | 49.7s         | 4.91GB          |
-| runiq | -f digest | 34.8s           | 586.8MB           | 31.1s         | 588.6MB         |
-| runiq | -f bloom  | 66.5s           | 338MB             | 49.8s         | 338MB           |
-| runiq | -f sorted | N/A             | N/A               | 24.9s         | 1.3MB           |
+| Tool  | Flags      | Time (Unsorted) | Memory (Unsorted) | Time (Sorted) | Memory (Sorted) |
+|:------|:-----------|----------------:|------------------:|--------------:|----------------:|
+| uniq  | N/A        | N/A             | N/A               | 105.8s        | 1.6MB           |
+| sort  | -u         | 2529.9s         | 12.70GB           | 373.0s        | 12.42GB         |
+| uq    | N/A        | 76.4s           | 5.03GB            | 57.9s         | 5.03GB          |
+| huniq | N/A        | 31.2s           | 586.3MB           | 28.4s         | 587.4MB         |
+| runiq | -f quick   | 34.7s           | 586.8MB           | 30.5s         | 586.6MB         |
+| runiq | -f simple  | 67.4s           | 5.00GB            | 49.0s         | 5.00GB          |
+| runiq | -f sorted  | N/A             | N/A               | 24.9s         | 1.3MB           |
+| runiq | -f compact | 66.3s           | 338.3MB           | 49.0s         | 338.3M          |
 
 All of these numbers are with the tool output being written to `/dev/null`. Some of these tools (`runiq` included) have flags to count/report rather than print the outputs; these use cases will always be much quicker than the numbers above.
 
-It's also worth noting the accuracy given by the `bloom` filter in these cases above. In the first test the results were identical to those of the other filter types, showing that it's generally pretty accurate to some fairly large amounts of input (although not always!). In the case of the second test set, it actually only reported a single false positive (it reported 44,302,819 uniques). This should show some scale of accuracy; it will generally be at least _near_ perfect, with lower amounts of input data basically always being correct.
+It's also worth noting the accuracy given by the `compact` filter in these cases above; in both of my test sets the results were identical to those of the other filter types, showing that the `compact` filter is generally pretty acurrate to some fairly large amounts of input (although not always!).
