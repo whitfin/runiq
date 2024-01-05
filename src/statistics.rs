@@ -22,6 +22,7 @@ use format_num::NumberFormat;
 pub struct Stats {
     unique: u64,
     total: u64,
+    size: u64,
 }
 
 impl Stats {
@@ -43,6 +44,12 @@ impl Stats {
         self.total += 1;
     }
 
+    /// Adds a size entry to the stats count.
+    #[inline]
+    pub fn add_size(&mut self, size: usize) {
+        self.size += size as u64
+    }
+
     /// Retrieves the total count of duplicate entries.
     pub fn duplicates(&self) -> u64 {
         self.total - self.unique
@@ -51,6 +58,11 @@ impl Stats {
     /// Retrieves the rate of receiving duplicates.
     pub fn rate(&self) -> f32 {
         ((self.unique as f64 / self.total as f64) * 100.0) as f32
+    }
+
+    /// Retrieves the total size of input entries.
+    pub fn size(&self) -> u64 {
+        self.size
     }
 
     /// Retrieves the total count of input entries.
@@ -67,14 +79,22 @@ impl Stats {
     pub fn print(&self) {
         let num = NumberFormat::new();
         let table = vec![
-            create_row(&num, "Unique Count:", self.uniques() as f64, ",.0"),
-            create_row(&num, "Total Count:", self.total() as f64, ",.0"),
-            create_row(&num, "Dup Offset:", self.duplicates() as f64, ",.0"),
+            create_row(
+                &num,
+                "File Size:",
+                self.size() as f64,
+                ",.0",
+                &format!("\x08(~{})", bytesize::to_string(self.size(), false)),
+            ),
+            create_row(&num, "Total Count:", self.total() as f64, ",.0", ""),
+            create_row(&num, "Unique Count:", self.uniques() as f64, ",.0", ""),
+            create_row(&num, "Dup Offset:", self.duplicates() as f64, ",.0", ""),
             create_row(
                 &num,
                 "Dup Rate:",
                 ((100.0 - self.rate()) / 100.0) as f64,
                 ",.2%",
+                "",
             ),
         ]
         .table()
@@ -86,10 +106,11 @@ impl Stats {
 }
 
 /// Constructs a table row using a label and value.
-fn create_row(num: &NumberFormat, label: &str, value: f64, fmt: &str) -> RowStruct {
+fn create_row(num: &NumberFormat, label: &str, value: f64, fmt: &str, ext: &str) -> RowStruct {
     vec![
         format!("\x08{}", label).cell(),
         num.format(fmt, value).cell().justify(Justify::Right),
+        ext.cell(),
     ]
     .row()
 }

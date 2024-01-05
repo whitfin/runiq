@@ -69,6 +69,11 @@ fn main() -> io::Result<()> {
             // unwrap the input line
             let input = line?;
 
+            // track input sizing
+            if options.statistics {
+                statistics.add_size(input.len() + 1)
+            }
+
             // detect duplicate value
             if filter.detect(input) {
                 // handle stats or print
