@@ -55,9 +55,9 @@ For examples of the programmatic API, please see [the examples](./examples/basic
 Runiq comes with several "filters", which control exactly how uniqueness is verified. Each of these filters has different use cases, and excels in different ways.
 
 * `quick`
-    * The `quick` filter works the same way as the `naive` filter, except values are pre-hashed.
-    * This results in much lower memory overhead than `naive`, with comparably throughput.
-    * Depending on your input lengths, throughput can actually be faster than `naive`.
+    * The `quick` filter works the same way as the `simple` filter, except values are pre-hashed.
+    * This results in much lower memory overhead than `simple`, with comparably throughput.
+    * Depending on your input lengths, throughput can actually be faster than `simple`.
 * `simple`
     * The `simple` filter uses basic `Set` implementations to determine uniqueness.
     * Offers a fairly good throughput, while still effectively guaranteeing accuracy.
