@@ -10,7 +10,6 @@ Runiq will be available via [Crates.io](https://crates.io/crates/runiq), so it c
 If you wish to install Runiq as a command line utility, you can install it via an easy one-liner in your terminal:
 
 ```shell
-# install as a binary
 $ cargo install runiq
 ```
 
