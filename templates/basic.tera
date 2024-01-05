@@ -1,0 +1,6 @@
+{
+    "age": {{ integer(start=18, end=99) }},
+    "name": "{{ lastName() }}",
+    "state": "{{ state() }}",
+    "occupation": "{{ profession() }}"
+}
