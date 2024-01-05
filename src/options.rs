@@ -49,7 +49,7 @@ impl Options {
             inverted: options.get_flag("invert"),
 
             // store the filter to use for unique detection
-            filter: filter.unwrap_or(&FilterKind::Quick).to_owned(),
+            filter: filter.unwrap().to_owned(),
 
             // own all inputs
             inputs: options
@@ -83,11 +83,13 @@ impl Options {
                     .num_args(1)
                     .value_parser(value_parser!(FilterKind))
                     .hide_default_value(true)
+                    .default_value("quick")
                     .ignore_case(true),
                 // inputs: +required +multiple
                 Arg::new("inputs")
                     .help("Input sources to filter")
                     .action(ArgAction::Append)
+                    .hide_default_value(true)
                     .default_value("-"),
                 // invert: -i --invert
                 Arg::new("invert")
@@ -101,10 +103,17 @@ impl Options {
                     .short('s')
                     .long("statistics")
                     .action(ArgAction::SetTrue),
+                // help: -h, --help
+                Arg::new("help")
+                    .short('h')
+                    .long("help")
+                    .action(ArgAction::HelpLong)
+                    .hide(true),
             ])
             // settings required for parsing
+            .disable_help_subcommand(true)
             .arg_required_else_help(true)
-            .hide_possible_values(true)
+            .disable_help_flag(true)
             .trailing_var_arg(true)
     }
 }
