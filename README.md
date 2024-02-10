@@ -127,4 +127,4 @@ Dup Rate:             55.69%
 
 All of these numbers are with the tool output being written to `/dev/null`. Some of these tools (`runiq` included) have flags to count/report rather than print the outputs; these use cases will always be much quicker than the numbers above.
 
-It's also worth noting the accuracy given by the `compact` filter in these cases above; in both of my test sets the results were identical to those of the other filter types, showing that the `compact` filter is generally pretty acurrate to some fairly large amounts of input (although not always!).
+It's also worth noting the accuracy given by the `compact` filter in these cases above; in both of my test sets the results were identical to those of the other filter types, showing that the `compact` filter is generally pretty accurate to some fairly large amounts of input (although not always!).
