@@ -75,10 +75,7 @@ fn run() -> io::Result<()> {
         let mut lines = BufReader::new(reader).byte_lines();
 
         // iterate all lines as &[u8] slices
-        while let Some(line) = lines.next() {
-            // unwrap the input line
-            let input = line?;
-
+        while let Some(input) = lines.next().transpose()? {
             // track input sizing
             if options.statistics {
                 statistics.add_size(input.len() + 1)
