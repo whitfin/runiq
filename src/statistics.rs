@@ -85,10 +85,7 @@ impl Stats {
                 "File Size:",
                 self.size() as f64,
                 ",.0",
-                &format!(
-                    "\x08(~{})",
-                    ByteSize::b(self.size()).display().si().to_string()
-                ),
+                &format!("\x08(~{})", ByteSize::b(self.size()).display().si()),
             ),
             create_row(&num, "Total Count:", self.total() as f64, ",.0", ""),
             create_row(&num, "Unique Count:", self.uniques() as f64, ",.0", ""),
