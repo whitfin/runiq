@@ -3,6 +3,7 @@
 //! Very little is exposed from this module aside from the `Stats`
 //! struct which contains tracking based on unique counters.
 
+use bytesize::ByteSize;
 use cli_table::format::{Border, Justify, Separator};
 use cli_table::{print_stdout, Cell, Row, RowStruct, Table};
 use format_num::NumberFormat;
@@ -84,7 +85,10 @@ impl Stats {
                 "File Size:",
                 self.size() as f64,
                 ",.0",
-                &format!("\x08(~{})", bytesize::to_string(self.size(), false)),
+                &format!(
+                    "\x08(~{})",
+                    ByteSize::b(self.size()).display().si().to_string()
+                ),
             ),
             create_row(&num, "Total Count:", self.total() as f64, ",.0", ""),
             create_row(&num, "Unique Count:", self.uniques() as f64, ",.0", ""),
