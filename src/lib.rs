@@ -13,6 +13,6 @@
 //! used as a library as the `Filter` trait is exposed publicly. If
 //! you are using Runiq as a library, do **not** rely on any modules
 //! hidden from the public documentation.
-#![doc(html_root_url = "https://docs.rs/runiq/2.0.0")]
+#![doc(html_root_url = "https://docs.rs/runiq/2.1.0")]
 mod filters;
 pub use filters::{CompactFilter, Filter, Filters, QuickFilter, SimpleFilter, SortedFilter};
