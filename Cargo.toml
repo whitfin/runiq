@@ -30,3 +30,6 @@ format_num = { version = "0.1", optional = true }
 
 [dev-dependencies]
 jen = "1.7"
+
+[profile.release]
+lto = true
